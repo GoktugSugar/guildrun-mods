@@ -11,6 +11,11 @@ The repo also includes the full source, the tools and the raw assets behind the 
 
 > Unofficial fan mod. Saved runs that contain a custom hero need the mod to load.
 
+> **Disclaimer: partially vibe-coded.** A large part of this mod (plugin code, Blender scripts, tools and docs) was
+> written with an AI coding assistant (Claude Code) and then tested by playing the game, not through careful code
+> review. Expect rough edges and bugs. It's a hobby project, provided as is with no warranty. Back up your saves
+> before using it, and please report problems as issues (with your `BepInEx\LogOutput.log`).
+
 ## Installation
 
 ### 1. Install BepInEx 6 (IL2CPP)
