@@ -1,0 +1,16 @@
+SKILL_VO
+    0.00s  "?"  (xscream_cut)
+    0.00s  "?"  (freddy_jumpscare_cut)
+PURCHASE_VO
+    4.81s  "I bet you didn't expect me to show up, did you now?"  (didnt_expect_me)
+    4.88s  "What's that and say? You didn't invite me. Too bad."  (didnt_invite_me)
+DEATH_VO
+    0.00s  "?"  (powerdown_cut)
+RANKUP_B_VO
+    0.00s  "?"  (laugh_1_cut)
+    0.00s  "?"  (laugh_2_cut)
+RANKUP_A_VO
+    2.33s  "That sure was fun!"  (sure_was_fun)
+    4.55s  "It looks like someone wasn't ready for Freddy to come to the party."  (party)
+RANKUP_S_VO
+    0.00s  "?"  (music_box_cut)

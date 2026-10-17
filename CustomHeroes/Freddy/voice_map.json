@@ -1,0 +1,8 @@
+{
+ "SKILL_VO": ["xscream_cut", "freddy_jumpscare_cut"],
+ "PURCHASE_VO": ["didnt_expect_me", "didnt_invite_me"],
+ "DEATH_VO": ["powerdown_cut"],
+ "RANKUP_B_VO": ["laugh_1_cut", "laugh_2_cut"],
+ "RANKUP_A_VO": ["sure_was_fun", "party"],
+ "RANKUP_S_VO": ["music_box_cut"]
+}

@@ -1,0 +1,14 @@
+# build output
+bin/
+obj/
+# Python
+.venv/
+__pycache__/
+*.pyc
+# Blender autosave backups
+*.blend1
+# personal mods, kept local only
+Source/GuildrunModMenu/
+Source/HideRelicsUI/
+InfiniteRerolls/
+Debug/

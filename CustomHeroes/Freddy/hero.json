@@ -1,0 +1,146 @@
+// Freddy Fazbear: a new hero for Guildrun (CustomHeroes plugin). Copies Skorn's data, then replaces what's below.
+// Effects use the game's effect system: Trigger / Target / Attach / Condition / Actions, see Mods\CustomHeroes\README.md.
+//
+// A Vanguard that keeps getting bigger: every Jumpscare! makes him grow and gain a share of his Max HP for the rest of
+// the fight (no cap; it all resets after combat), and his damage scales with Max HP.
+{
+  "Id": 28,
+  "Key": "Freddy",
+  "Name": "Freddy",
+  "Template": 12,                        // Skorn: animation timings and the prefab, which gets Freddy's own model instead of Skorn's
+  "Guild": "Aegis Global",
+  "Classes": ["Vanguard"],
+  "Gender": "Masculine",
+  "Tags": ["Stun", "Burn", "Shards"],
+
+  // Look: his own model with its own animation clips, portraits composed from a render, his own voice lines.
+  "Model": {
+    "File": "Assets/freddy.glb",
+    "HipHeight": 0.83,                   // Skorn's hip height in his idle pose: the model is sized to match it
+    "Hits": { "BasicAttack": 0.6, "SkillAttack": 0.85 }   // clip time of the hit, lined up with the game's hit timing
+  },
+  "Portraits": {
+    "Source": "Assets/Portraits/_source.png",
+    "Folder": "Assets/Portraits",        // Freddy_round.png, Square_Portrait_Freddy.png are used as they are
+    "Scale": 0.74,                       // a bit smaller than Skorn
+    "Drop": 0.10                         // full-body art sits lower so the card's name banner cuts his feet
+  },
+  "Voice": "Assets/Voice",
+
+  "Lore": {
+    "Title": "The Headliner",
+    "Quote": "It's me.",
+    "CurrentWork": "Aegis recovered him from a rift that swallowed a shuttered family pizzeria: a seven-foot animatronic bear, still singing to an empty dining room. Nobody has found his power source, and nobody has found an off switch. He works the night shift without being asked, and the guards at the guild house have stopped taking that post.",
+    "Motivation": "He wants an audience. Book him the biggest stage you have, and make sure nobody leaves before the show is over."
+  },
+
+  // Vanguards run 1100-1250 HP / 41-44 Defense / 37-41 Attack / 4 Mana Regen (Niklas 1150/44/40); Freddy sits there too.
+  "Stats": {
+    "MaxHealth": 1150,
+    "MaxMana": 80,
+    "StartingMana": 30,
+    "ManaRegen": 4,
+    "Defense": 44,
+    "BaseAttackDamage": 38,
+    "BaseAttackSpeed": 0.38,
+    "Crit": 15,
+    "StartWithActiveAbility": 1
+  },
+
+  "Active": {
+    "Id": 30,
+    "Template": 21,                      // Ming's "Searing Mantra": damage and Stun to all surrounding enemies
+    "Name": "Jumpscare!",
+    "Description": "Let out a horrifying screech, dealing [100+20|25|30|35_MaxHealth+100_Magic]<statcalc_damage> damage and [Stunning]<stun> all surrounding enemies for 2 seconds.\n\nEach [cast,]<bold> Freddy grows in size and gains [0+8_MaxHealth]<statcalc_maxhp> [Max HP]<maxhp> for the rest of combat. This ability stacks.",
+    "ActionFields": { "_stunDuration": 2, "_burnPerRush": 0 },
+    "Attacks": [
+      { "Delay": 0.85, "Damage": 100, "ExtraDamagePerRank": 0, "Scalings": [
+          { "Stat": "MaxHealth", "Factors": [0.20, 0.25, 0.30, 0.35] },
+          { "Stat": "Magic", "Factors": [1.0] } ] }
+    ],
+    // Runs before the screech, as the cast starts. Like Rip's Rampage: a block that lasts the whole fight, one more
+    // per cast, so the growth adds up. 8% of Max HP each time (Rip's Rampage gives 10%).
+    "PreActions": [
+      { "Type": "EffectAbilityAction", "EffectBlocks": [
+          { "Delay": 0, "Duration": 999, "Effects": [
+              { "Trigger": "Constant", "Target": "Owner",
+                "Actions": [
+                  { "Type": "ModifyStatFromStatAction", "StatTypeSource": "MaxHealth", "StatTypeTarget": "MaxHealth", "Percent": 0.08 },
+                  { "Type": "ModifySizeAction", "Delta": 0.08 } ] } ] } ] }
+    ]
+  },
+
+  "Specializations": [
+    {
+      "Id": 2801,
+      "Template": 1702,                  // Ratna's Mystic specialization
+      "Name": "The Glamrock",
+      "Class": "Mystic",
+      "Tags": ["Shields"],
+      "ClassDescription": "Gain the [Mystic]<mystic> class and [4 Mana Regen]<manaregen>.",
+      "Description": "On [cast,]<bold> the Hero with the lowest [% Max HP]<maxhp> gains [50+8|10|12|14_MaxHealth]<statcalc_shield> [Shields]<shield>.",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "ManaRegen", "Value": 4 } ] },
+        { "Trigger": "OnAbilityCast", "Target": "AllHeroes", "Attach": "OwnerIsSource",
+          "Condition": { "Type": "IsEffectTargetLowestPercentHealthHeroCondition" },
+          "Actions": [ { "Type": "ApplyShieldWithScalingAction", "BaseShield": 50,
+              "Scalings": [ { "Stat": "MaxHealth", "Factors": [0.08, 0.10, 0.12, 0.14] } ] } ] }
+      ]
+    },
+    {
+      // Molten Freddy (FNAF 6) feeds on fire. Each enemy Jumpscare! hits gives up to 100 of its Burn; Freddy first
+      // gains 20 Max HP per 10 Burn it has (one effect per 10-Burn step, checked before the absorb), then the game's
+      // burn-consume action takes the stacks (it deals them as instant damage).
+      // The last effect makes sure there is Burn to absorb: for Rush (15), Vanguards (Freddy too) burn whoever auto
+      // attacks them.
+      "Id": 2802,
+      "Template": 2102,
+      "PassiveTemplate": 102101,         // Ming's Inner Flame (icon)
+      "Name": "The Molten",
+      "Tags": ["Burn", "Rush", "Backup"],
+      "Description": "[Jumpscare!]<bold> absorbs up to [100 Burn]<burn> from each enemy it hits. Freddy gains [20 Max HP]<maxhp> per [10 Burn]<burn> absorbed for the rest of combat.\n\nFor [Rush (15),]<rush> whenever a [Vanguard]<vanguard> is [auto attacked]<bold> inflict [5 Burn]<burn> on the attacker. [Backup.]<backup>",
+      "Effects": [
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 10 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 20 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 30 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 40 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 50 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 60 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 70 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 80 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 90 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 100 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "TriggerTarget", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "DealInstantBurnDamageAndReduceStacksAction", "StacksToReduceAndDeal": 100 } ] },
+        // Built like Niklas's The Hoarder ("whenever a Vanguard or Tank is auto attacked"): an auto attack received
+        // by a Hero, filtered by class, aimed back at the attacker. Backup = works in play and in reserve.
+        { "Trigger": "OnAttackDamageReceived", "Target": "TriggerSource", "Attach": "TargetIsHero", "Rush": 15, "Backup": true,
+          "Condition": { "Type": "TriggerTargetHasOneOfTwoClassesCondition", "ClassId1": "Vanguard", "ClassId2": "Vanguard" },
+          "Actions": [ { "Type": "ApplyStatusAction", "Status": "Burn", "Amount": 5 } ] }
+      ]
+    },
+    {
+      // Golden Freddy, a Rush specialist.
+      "Id": 2803,
+      "Template": 1801,
+      "PassiveTemplate": 101603,         // Gustav's shard passive (icon)
+      "Name": "The Golden",
+      "PassiveName": "It's Me",
+      "Tags": ["Rush", "Shards", "Backup"],
+      "Description": "Increase the duration of [Rush]<rush> abilities by 3 seconds. [Backup.]<backup>\n\nOn [Rush]<rush> trigger, gain [2 Mana Regen]<manaregen> and generate [1 Shard.]<shard>",
+      "Effects": [
+        // The game's "Rush abilities last X seconds longer" action. Priority 0 like Ming's The Enlightened, so it
+        // applies before any Rush starts.
+        { "Trigger": "Constant", "Target": "Player", "Priority": 0, "Backup": true,
+          "Actions": [ { "Type": "IncreaseRushDurationAction", "Duration": 3 } ] },
+        // On Rush trigger like Rip's The Glutton (OnRushStart, any Rush). Mana Regen adds up for the rest of the
+        // fight; Shards go to the player like every shard ability's.
+        { "Trigger": "OnRushStart", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "ManaRegen", "Value": 2 } ] },
+        { "Trigger": "OnRushStart", "Target": "Player",
+          "Actions": [ { "Type": "GainShardsAction", "Amount": 1 } ] }
+      ]
+    }
+  ]
+}

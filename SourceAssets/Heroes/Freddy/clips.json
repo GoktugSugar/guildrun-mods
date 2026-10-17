@@ -1,0 +1,42 @@
+{
+ "didnt_expect_me": {
+  "s": 4.81,
+  "text": "I bet you didn't expect me to show up, did you now?"
+ },
+ "didnt_invite_me": {
+  "s": 4.88,
+  "text": "What's that and say? You didn't invite me. Too bad."
+ },
+ "freddy_jumpscare": {
+  "s": 2.64,
+  "text": "BOOOOOOOOOOOOOOOOM!"
+ },
+ "laugh_1": {
+  "s": 5.53,
+  "text": "Uh-huh, uh-huh, uh-huh, uh-huh..."
+ },
+ "laugh_2": {
+  "s": 7.99,
+  "text": "Mm-hmm. Mm-hmm. Mm-hmm."
+ },
+ "music_box": {
+  "s": 61.64,
+  "text": "This video is made possible by Mooji Media Ltd. you"
+ },
+ "party": {
+  "s": 4.55,
+  "text": "It looks like someone wasn't ready for Freddy to come to the party."
+ },
+ "powerdown": {
+  "s": 18.73,
+  "text": "Aum Aum Aum Aum Aum"
+ },
+ "sure_was_fun": {
+  "s": 2.33,
+  "text": "That sure was fun!"
+ },
+ "xscream": {
+  "s": 5.23,
+  "text": ""
+ }
+}
