@@ -45,6 +45,7 @@ namespace CustomHeroes
         static readonly Il2CppSystem.Collections.Generic.List<Object> Keep = new();
 
         public static T Pin<T>(T o) where T : Object { if (o != null) Keep.Add(o); return o; }
+        public static void Unpin(Object o) { if (o != null) Keep.Remove(o); }
         public static IEnumerable<IntPtr> All(string cls) => Entries.Where(kv => kv.Key.cls == cls).OrderBy(kv => kv.Key.id).Select(kv => kv.Value);
         public static IntPtr Get(string cls, int id) => Entries.TryGetValue((cls, id), out var p) ? p : IntPtr.Zero;
         public static int Seq(IntPtr entry) => Native.ReadInt(entry + IdOffset(entry) + _seqOff);
@@ -67,6 +68,7 @@ namespace CustomHeroes
             foreach (var d in Plugin.Heroes)
                 try { AddHero(d); }
                 catch (Exception e) { Plugin.L.LogError($"Could not add {d.Name}: {e}"); }
+            if (!Plugin.InPools.Value) SetInPools(false);
         }
 
         static void Index()
@@ -394,8 +396,23 @@ namespace CustomHeroes
                 foreach (var p in a.ActionFields.EnumerateObject())
                 {
                     var hit = new List<string>();
+                    // object fields: an effect list ("_effects" of an AoE) or another ability's field
+                    // ({ "Ability": 22, "Field": "_regularAoeEntry" }: Pimenta's poison cloud)
+                    IntPtr obj = IntPtr.Zero;
+                    if (p.Value.ValueKind == JsonValueKind.Array) obj = Effects(p.Value, $"{who} {p.Name}").Pointer;
+                    else if (p.Value.ValueKind == JsonValueKind.Object)
+                    {
+                        int id = p.Value.GetProperty("Ability").GetInt32();
+                        string field = p.Value.GetProperty("Field").GetString();
+                        var ep = Get("ActiveAbilityEntry", id);
+                        var acts = ep == IntPtr.Zero ? null : new ActiveAbilityEntry(ep)._AbilityActions_k__BackingField;
+                        if (acts != null) foreach (var x in acts)
+                                if (obj == IntPtr.Zero) obj = EffectJson.GetRefField(x.Pointer, field);
+                        if (obj == IntPtr.Zero) { Plugin.L.LogWarning($"{who}: ability {id} has no action with a '{field}'"); continue; }
+                    }
                     foreach (var c in copies)
-                        if (EffectJson.SetField(c.Pointer, p.Name, p.Value)) hit.Add(Native.ClassName(c.Pointer));
+                        if (obj != IntPtr.Zero ? EffectJson.SetRefField(c.Pointer, p.Name, obj) : EffectJson.SetField(c.Pointer, p.Name, p.Value))
+                            hit.Add(Native.ClassName(c.Pointer));
                     if (hit.Count == 0) Plugin.L.LogWarning($"{who}: no ability action has a field '{p.Name}'");
                     else Plugin.L.LogInfo($"{who}: {p.Name} = {p.Value.GetRawText()} on {string.Join(", ", hit)}");
                 }
@@ -583,6 +600,31 @@ namespace CustomHeroes
 
         // ------------------------------------------------------------------ pools
 
+        /// <summary>Takes every custom hero out of the hero pools (shops, starting bundles) or puts them back
+        /// (F8 menu, config General.InHeroPools). Heroes already on a team or in an offer stay.</summary>
+        public static void SetInPools(bool on)
+        {
+            Plugin.InPools.Value = on;
+            if (!Done) return;
+            if (on) { foreach (var d in Plugin.Heroes) try { JoinPools(d); } catch (Exception e) { Plugin.L.LogError($"{d.Name}: pools: {e}"); } return; }
+            var ids = new HashSet<int>(Plugin.Heroes.Select(d => d.Id));
+            int removed = 0;
+            foreach (var p in All("HeroPoolEntry"))
+            {
+                var pool = new HeroPoolEntry(p);
+                var arr = pool._WeightedRewards_k__BackingField;
+                if (arr == null) continue;
+                var keep = new List<WeightedHero>();
+                foreach (var w in arr) if (w != null && !ids.Contains(w._elementId)) keep.Add(w);
+                if (keep.Count == arr.Length) continue;
+                var smaller = new Il2CppReferenceArray<WeightedHero>(keep.Count);
+                for (int i = 0; i < keep.Count; i++) smaller[i] = keep[i];
+                pool._WeightedRewards_k__BackingField = smaller;
+                removed += arr.Length - keep.Count;
+            }
+            Plugin.L.LogInfo($"Custom heroes taken out of the hero pools ({removed} entries); they won't be offered until switched back on.");
+        }
+
         static void JoinPools(HeroDefinition d)
         {
             int joined = 0;
@@ -593,10 +635,12 @@ namespace CustomHeroes
                 if (arr == null) continue;
                 int weight = -1;
                 bool already = false;
+                bool named = d.Pools != null && d.Pools.Count > 0;   // hero.json "Pools": join these by title instead
+                bool wanted = named && d.Pools.Exists(t => string.Equals(t, pool._title, StringComparison.OrdinalIgnoreCase));
                 foreach (var w in arr)
                 {
                     if (w == null) continue;
-                    if (w._elementId == d.Template) weight = w._Weight_k__BackingField;
+                    if (named ? wanted && weight < 0 : w._elementId == d.Template) weight = w._Weight_k__BackingField;
                     if (w._elementId == d.Id) already = true;
                 }
                 if (weight < 0 || already) continue;

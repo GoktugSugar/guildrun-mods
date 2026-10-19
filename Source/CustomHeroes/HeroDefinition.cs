@@ -29,6 +29,8 @@ namespace CustomHeroes
         public AbilityDef Active;
         public List<SpecDef> Specializations = new();
         public int PoolWeight;                       // weight in each hero pool the template is in (0 = same as template)
+        public List<string> Pools;                   // optional: hero pool titles to join instead of the template's
+                                                     // ("AllHeroes", "Duelists", "Duelists and Warriors"...)
         public bool StartingBundles = true;          // also offer the hero in the starting bundles
         public ModelDef Model;                       // the hero's own 3D model (replaces the template's in the prefab)
         public PortraitDef Portraits;                // portraits composed from a cut-out render
@@ -75,8 +77,35 @@ namespace CustomHeroes
         public double Scale = 1;           // size multiplier on top of the hip-height match
         public double HipHeight;           // template's hip height to match (0 = measured in the template prefab)
         public double Yaw;                 // extra rotation in degrees if the model faces the wrong way
-        public Dictionary<string, string> Clips = new();   // game animation -> clip name (default Idle/Walk/Attack/Skill/Death)
-        public Dictionary<string, double> Hits = new();    // clip time of the hit for BasicAttack / SkillAttack
+        public Dictionary<string, string> Clips = new();   // game animation -> clip name (default Idle/Walk/Attack/Skill/Death);
+                                                           // "A,B,C" = take turns (attack combos, Q1/Q2/Q3), restarting each fight
+        public Dictionary<string, double> Hits = new();    // clip time of the hit, by clip name or by BasicAttack / SkillAttack
+        public bool HideTemplateEffects;   // also switch off the template's particle/trail effects in its prefab (slashes...)
+        public bool Warp = true;          // true: attack/skill clips are stretched to the game's timing; false: they play at
+                                           // their own speed, started so their hit lands on the game's hit
+        public Dictionary<string, double[]> Timings = new();   // game timing override: state -> [duration, hit] seconds
+        public List<VfxDef> Vfx = new();   // effects spawned at a clip time
+        public List<CueDef> Cues = new();  // clips played when the game runs one of the hero's effects (no animation of its own)
+    }
+
+    internal sealed class CueDef
+    {
+        public string Trigger;             // effect trigger to watch (OnStatusStacksApplied...)
+        public string Action;              // and one of its action types (ModifyStatAction...)
+        public string Clip;                // clip to play (at its own speed)
+        public double Cooldown = 1.5;      // seconds: several hits at once play it once
+        public double Burst;               // > 0: a short wind burst of this size (hero heights) on the hero
+        public bool Blink;                 // the model jumps to the action's target for the clip, then back (looks only)
+    }
+
+    internal sealed class VfxDef
+    {
+        public string Clip;                // clip that spawns it
+        public double At;                  // clip time
+        public string Type = "Tornado";
+        public double Distance = 4;        // travel, in hero heights
+        public double Duration = 0.9;      // seconds
+        public double Size = 1.3;          // height, in hero heights
     }
 
     internal sealed class PortraitDef

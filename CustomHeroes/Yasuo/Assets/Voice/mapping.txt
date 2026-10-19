@@ -1,0 +1,21 @@
+SKILL_VO
+    0.67s  "Hasagi!"  (q3_1)
+    0.96s  "Aseryo!"  (q3_0)
+    0.92s  "Sorye!"  (r_2)
+    1.06s  "Face the wind!"  (w_0)
+PURCHASE_VO
+    4.26s  "Death is like the wind; always by my side."  (select)
+    2.92s  "Follow the wind, but watch your back."  (move_5)
+    2.41s  "I will follow this path until the end."  (move_6)
+DEATH_VO
+    3.21s  "Yasuo groans."  (death_0)
+    2.87s  "Yasuo groans."  (death_1)
+RANKUP_B_VO
+    2.37s  "One blade, one purpose."  (attack_12)
+    1.74s  "Some things never dull."  (attack_13)
+RANKUP_A_VO
+    2.17s  "I alone decide my fate."  (attack_11)
+    2.19s  "This story is not yet finished."  (move_0)
+RANKUP_S_VO
+    1.74s  "Sorye ge ton!"  (r_0)
+    2.80s  "No cure for fools."  (ban)

@@ -12,6 +12,18 @@
   Freddy Fazbear audio page of the FNaF Wiki (<https://freddy-fazbears-pizza.fandom.com>), then trimmed and
   loudness-normalized. `Tools/CustomHeroes/freddy_fetch_audio.py` lists the exact files.
 
+## Yasuo and Malphite (Custom Heroes)
+
+- **Characters**: Yasuo, Malphite and *League of Legends* © Riot Games. Used here in a non-commercial fan mod
+  under Riot's [Legal Jibber Jabber](https://www.riotgames.com/en/legal) policy; not endorsed by Riot Games.
+- **3D models and animations**: exported from League of Legends (`yasuo.glb`, `malphite.glb`). The portrait
+  renders were made from them with `Tools/CustomHeroes/yasuo_render.py`.
+- **Icons**: cut from the champions' League splash art (`SourceAssets/Heroes/<Hero>/splash`) by
+  `Tools/CustomHeroes/yasuo_icons.py` and `malphite_icons.py`.
+- **Voice lines and sounds**: from League of Legends, downloaded from the champions' audio pages on the League of
+  Legends Wiki (<https://leagueoflegends.fandom.com>), then loudness-normalized.
+  `Tools/CustomHeroes/yasuo_fetch_audio.py` lists the exact files.
+
 ## Game
 
 - **Guildrun** © Leyline. This repo contains no game files; the mods load the game's own data at runtime.

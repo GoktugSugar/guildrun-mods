@@ -1,12 +1,12 @@
 """Build a custom hero's Voice folders from a mapping, then loudness-normalize them.
 
-usage: <venv python> build_voice.py <source dir> <hero dir> <mapping.json> [target_db=-23]
-  target_db: speech loudness; raise it (e.g. -18) for short breathy lines that sound quiet in game.
+usage: <venv python> build_voice.py <source dir> <hero dir> <mapping.json> [target_lufs=-23]
+  target_lufs: loudness every clip gets (LUFS, see normalize.py).
   mapping.json: {"SKILL_VO": ["xscream_cut", ...], "PURCHASE_VO": [...], ...}
   Slot names are the event suffixes the game plays: event:/SFX/COMB/HEROES/<Hero>/<Hero>_<slot>
   (SKILL_VO, PURCHASE_VO, DEATH_VO, RANKUP_B_VO, RANKUP_A_VO, RANKUP_S_VO; check the log for others).
   Clip names are the files in <source dir>/dl without .ogg (see clip_table.py).
-  Writes <hero dir>/Assets/Voice/<slot>/*.wav (16-bit, -23 dB speech level) and Voice/mapping.txt.
+  Writes <hero dir>/Assets/Voice/<slot>/*.wav (16-bit, all at -23 LUFS) and Voice/mapping.txt.
 """
 import json
 import os

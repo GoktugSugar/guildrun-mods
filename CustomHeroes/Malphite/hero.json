@@ -1,0 +1,164 @@
+// Malphite, Shard of the Monolith: a new hero for Guildrun (CustomHeroes plugin). Copies Pimenta's data, then replaces what's below.
+// Effects use the game's effect system: Trigger / Target / Attach / Condition / Actions, see Mods\CustomHeroes\README.md.
+//
+// A Tank whose active is his League ult: Unstoppable Force charges into one enemy and Stuns it, which sets up Yasuo's
+// Last Breath (any enemy Stun). The Monolith (Mage) makes the charge hit and Stun everyone next to the target too.
+// Look: the League model with its own League clips (Assets\malphite.glb).
+// Per-rank numbers: the game counts ranks C=1 .. S=4 ("[0+10_Rank]" = 10/20/30/40, like Ming's Rush duration).
+{
+  "Id": 30,
+  "Key": "Malphite",
+  "Name": "Malphite",
+  "Template": 22,                        // Pimenta: Tank, starts with her active, 2.3 s cast (Rowan's is 3.3 s)
+  "Guild": "A Temple",                   // Yasuo's guild: the combo partners share the guild bonus
+  "Classes": ["Tank"],
+  "Gender": "Masculine",
+  "Tags": ["Stun", "Stall", "Shields"],
+
+  "Model": {
+    "File": "Assets/malphite.glb",       // League skeleton; hip bone "root" (the plugin matches it case-insensitively)
+    "Scale": 1.1,
+    // League's clips. Unstoppable Force: Pimenta's cast copied with the Lizard's charge, hit 0.75 s into the cast.
+    "Clips": {
+      "Idle": "Idle1",
+      "Move": "Run",
+      "BasicAttack": "Attack1,Attack2,Malphite_Attack3.anm",
+      "SkillAttack": "Spell4",
+      "Die": "Death"
+    },
+    "Warp": false,
+    "Hits": { "Attack1": 0.35, "Attack2": 0.35, "Malphite_Attack3.anm": 0.35, "Spell4": 0.5 },
+    "Timings": { "SkillAttack": [1.0, 0.75] }
+  },
+  "Portraits": {
+    "Source": "Assets/Portraits/_source.png",   // his idle stance, rendered from the .glb (yasuo_render.py, malphite_icons.py)
+    "Folder": "Assets/Portraits",               // Malphite_round / Square_Portrait_Malphite: head from his League splash (malphite_icons.py)
+    "Scale": 0.64                               // 25% smaller than Yasuo's 0.85
+  },
+  "Voice": "Assets/Voice",                      // League wiki lines (yasuo_fetch_audio.py ... Malphite); SKILL_VO = his R hit sound
+
+  "Lore": {
+    "Title": "Shard of the Monolith",
+    "Quote": "Rock solid.",
+    "CurrentWork": "When the rifts tore open above the Temple, a piece of its foundation stone stood up, shook off the moss and asked where the fight was. The monks have stopped arguing over whether he was always alive or only woke up. He guards the gate, and the gate has not moved since.",
+    "Motivation": "He was made to hold things together. Point him at whatever is breaking, and he will be the last thing standing in front of it."
+  },
+
+  // Tanks run 900-1000 HP / 52-60 Defense / 0.35-0.42 attack speed (Pimenta 950 / 58 / 33 / 0.42).
+  "Stats": {
+    "MaxHealth": 1000,
+    "MaxMana": 90,
+    "StartingMana": 40,
+    "ManaRegen": 4,
+    "Defense": 56,
+    "BaseAttackDamage": 34,
+    "BaseAttackSpeed": 0.4,
+    "AttackRange": 1,
+    "Crit": 15,
+    "StartWithActiveAbility": 1
+  },
+
+  "Active": {
+    "Id": 32,
+    "Template": 110,                     // the Lizard's charge: jumps in front of its target (0.5 s), then a melee hit (0.25 s)
+    "Name": "Unstoppable Force",
+    "Description": "Charge into an enemy, dealing [150+100|125|150|175_Defense+100_Magic]<statcalc_damage> damage and [Stunning]<stun> it for 1.5 seconds.\n\n[Granite Shield:]<bold> after [Stall (15),]<stall> gain [100+300|350|400|450_Defense]<statcalc_shield> [Shields.]<shield>",
+    "Attacks": [
+      { "Delay": 0.25, "Damage": 150, "ExtraDamagePerRank": 0, "Scalings": [
+          { "Stat": "Defense", "Factors": [1.0, 1.25, 1.5, 1.75] },
+          { "Stat": "Magic", "Factors": [1.0] } ] }
+    ],
+    "Effects": [
+      // The Stun lands with the hit; every Stun on an enemy fires Yasuo's Last Breath.
+      { "Trigger": "OnAbilityDamageDealt", "Target": "TriggerTarget", "Attach": "OwnerIsSource",
+        "Actions": [ { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] },
+      // Granite Shield, Stall (15): a Constant effect with Stall fires once at that time (like Grace's).
+      { "Trigger": "Constant", "Target": "Owner", "Stall": 15,
+        "Actions": [ { "Type": "ApplyShieldWithScalingAction", "BaseShield": 100,
+            "Scalings": [ { "Stat": "Defense", "Factors": [3.0, 3.5, 4.0, 4.5] } ] } ] }
+    ]
+  },
+
+  "Specializations": [
+    {
+      // Pimenta's Mage specialization as the base (class + icon). The spread copies Yasuo's Whirlwind: enemies next to
+      // the cast's target (IsAdjacentToTriggerTargetCondition). Their damage runs on the cast (effect damage on
+      // OnAbilityDamageDealt could set itself off again); their Stun on the hit.
+      "Id": 3001,
+      "Template": 2202,
+      "Name": "The Monolith",
+      "PassiveName": "Seismic Shockwave",
+      "Class": "Mage",
+      "Tags": ["Stun"],
+      "ClassDescription": "Gain the [Mage]<mage> class and [30 Magic]<magic>.",
+      "Description": "[Unstoppable Force]<bold> also hits every enemy next to its target: they take its damage and are [Stunned]<stun> for 1.5 seconds.",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Magic", "Value": 30 } ] },
+        { "Trigger": "OnAbilityCast", "Target": "AllEnemies", "Attach": "OwnerIsSource",
+          "Condition": { "Type": "IsAdjacentToTriggerTargetCondition" },
+          "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 150,
+              "Scalings": [ { "Stat": "Defense", "Factors": [1.0, 1.25, 1.5, 1.75] }, { "Stat": "Magic", "Factors": [1.0] } ] } ] },
+        { "Trigger": "OnAbilityDamageDealt", "Target": "AllEnemies", "Attach": "OwnerIsSource",
+          "Condition": { "Type": "IsAdjacentToTriggerTargetCondition" },
+          "Actions": [ { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] }
+      ]
+    },
+    {
+      // Rowan's Stall/Backup specialization as the base (icon). When his own Stall triggers (OnStallStart, his Granite
+      // Shield; it has the only Stall he owns, so once per combat) he gains Defense per rank (Pimenta's
+      // ModifyStatFromOwnerRankAction) and Mana.
+      // Stall reduction: the game's ReducePlayerStallDurationAction (the whole team's Stalls), 3 s always and 2 s more at
+      // B, A and S; Malphite's own Stalls get the same again on top (ReduceStallDurationAction on him), so his
+      // Granite Shield comes 6/10/14/18 s earlier. No per-rank version exists, so the extra steps are gated by
+      // IsEffectTargetBelowPercentHPPerOwnerRankCondition on Malphite at full HP at combat start:
+      // threshold = base + 0.5 x rank, crosses 100% exactly at the rank named. Priority 0 so it runs before any Stall
+      // timer starts (like Ming's Rush duration); Backup so it works from reserve.
+      "Id": 3002,
+      "Template": 1103,
+      "Name": "The Mountain",
+      "PassiveName": "Granite Will",
+      "Tags": ["Stall", "Backup"],
+      "Description": "On [Stall trigger,]<stall> gain [0+10_Rank]<statcalc_defense> [Defense]<defense> and [5 Mana.]<mana>\n\n[Stall]<stall> abilities trigger [1+2_Rank]<statcalc_rank> seconds earlier, Malphite's own twice as early. [Backup.]<backup>",
+      "Effects": [
+        { "Trigger": "OnStallStart", "Target": "Owner", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "ModifyStatFromOwnerRankAction", "_stat": "Defense", "_base": 0, "_amountPerRank": 10 },
+                       { "Type": "GiveManaAction", "Amount": 5 } ] },
+        { "Trigger": "Constant", "Target": "Owner", "Priority": 0, "Backup": true,
+          "Actions": [ { "Type": "ReducePlayerStallDurationAction", "Duration": 3 },
+                       { "Type": "ReduceStallDurationAction", "Duration": 3 } ] },
+        { "Trigger": "Constant", "Target": "Owner", "Priority": 0, "Backup": true,
+          "Condition": { "Type": "IsEffectTargetBelowPercentHPPerOwnerRankCondition", "_basePercent": 0.05, "_percentPerRank": 0.5 },
+          "Actions": [ { "Type": "ReducePlayerStallDurationAction", "Duration": 2 },
+                       { "Type": "ReduceStallDurationAction", "Duration": 2 } ] },
+        { "Trigger": "Constant", "Target": "Owner", "Priority": 0, "Backup": true,
+          "Condition": { "Type": "IsEffectTargetBelowPercentHPPerOwnerRankCondition", "_basePercent": -0.45, "_percentPerRank": 0.5 },
+          "Actions": [ { "Type": "ReducePlayerStallDurationAction", "Duration": 2 },
+                       { "Type": "ReduceStallDurationAction", "Duration": 2 } ] },
+        { "Trigger": "Constant", "Target": "Owner", "Priority": 0, "Backup": true,
+          "Condition": { "Type": "IsEffectTargetBelowPercentHPPerOwnerRankCondition", "_basePercent": -0.95, "_percentPerRank": 0.5 },
+          "Actions": [ { "Type": "ReducePlayerStallDurationAction", "Duration": 2 },
+                       { "Type": "ReduceStallDurationAction", "Duration": 2 } ] }
+      ]
+    },
+    {
+      // Pimenta's third specialization as the base (icon). Stat gains add up once per trigger for the rest of combat.
+      // "When auto attacked" = OnAutoAttack + OwnerIsTarget (Skorn's Poison passive). Bonus damage on hit like Irini's
+      // OnAttackDamageDealt passive.
+      "Id": 3003,
+      "Template": 2203,
+      "Name": "The Rock",
+      "PassiveName": "Thunderclap",
+      "Description": "On [auto attack,]<bold> gain [0+2_Rank]<statcalc_attackspeed> [Attack Speed.]<attackspeed>\n\nWhen [auto attacked,]<bold> gain [0+1_Rank]<statcalc_defense> [Defense.]<defense>\n\n[Auto attacks]<bold> deal [10+30|40|50|60_Defense]<statcalc_damage> bonus damage.",
+      "Effects": [
+        { "Trigger": "OnAutoAttack", "Target": "Owner", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "ModifyStatFromOwnerRankAction", "_stat": "AttackSpeed", "_base": 0, "_amountPerRank": 2 } ] },
+        { "Trigger": "OnAutoAttack", "Target": "Owner", "Attach": "OwnerIsTarget",
+          "Actions": [ { "Type": "ModifyStatFromOwnerRankAction", "_stat": "Defense", "_base": 0, "_amountPerRank": 1 } ] },
+        { "Trigger": "OnAttackDamageDealt", "Target": "TriggerTarget", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 10,
+              "Scalings": [ { "Stat": "Defense", "Factors": [0.3, 0.4, 0.5, 0.6] } ] } ] }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ Comments (`//`) and trailing commas are allowed.
 | `Template` | hero id to copy: prefab, animation timings and specialization layout come from it (12 = Skorn) |
 | `Guild` | `The Hunt`, `Frontline`, `Gaia Project`, `A Temple`, `L'Héritage`, `Aegis Global` |
 | `Classes` | one or two of `Warrior`, `Tank`, `Vanguard`, `Assassin`, `Duelist`, `Mystic`, `Mage` |
+| `Pools` | optional: hero pool titles to join (`AllHeroes`, `Duelists`, ...) instead of the template's pools |
 | `Gender`, `Tags` | `Masculine`/`Feminine`/`Neutral`; keyword tags shown on the hero (`Shields`, `Stall`, `Stun`...) |
 | `Stats` | `MaxHealth`, `MaxMana`, `StartingMana`, `ManaRegen`, `Defense`, `BaseAttackDamage`, `Attack`, `Magic`, `AttackRange`, `BaseAttackSpeed`, `AttackSpeed`, `Crit`, `MoveSpeed`, `StartWithActiveAbility` (missing = template's) |
 | `Lore` | `Title`, `Quote`, `CurrentWork`, `Motivation` |
@@ -30,6 +31,8 @@ Comments (`//`) and trailing commas are allowed.
 `Attacks` replaces the hits of the template ability's attack action: `Delay` (seconds after the cast starts; line it
 up with the animation's hit), `Damage`, and `Scalings` (`Stat` + `Factors` for ranks C, B, A, S).
 `ActionFields` sets fields on the template's actions (`{ "_stunDuration": 2 }` on Ming's `MingAbilityAction`).
+An effect list sets an effect-array field (an AoE's `"_effects"`), and `{ "Ability": 22, "Field": "_regularAoeEntry" }`
+copies an object field from another ability's actions (Teemo: the Mushroom Mage's AoE with Pimenta's poison cloud).
 `PreActions` / `ExtraActions` add ability actions before / after the template's; they run one after another, so
 give pre-actions no delay. Freddy's growth is an `EffectAbilityAction` whose blocks (`Delay`, `Duration`, `Effects`)
 hold normal effects; a block lasting 999 s stays for the whole fight and each cast adds one (Rip's Rampage works so).
@@ -105,9 +108,28 @@ game's own effect JSON; copy patterns from there. Effects in that full format ar
 ```
 
 The model's own clips play (no retargeting): the game's `AnimationHandler` says when an attack, skill or death
-starts, idle and walk follow the movement. The game builds voice events from the `Key`
+starts, idle and walk follow the movement. More `Model` options (Yasuo uses them all):
+
+- `"Clips": { "BasicAttack": "Attack1,Attack2,Attack3" }`: several clips take turns, starting over each fight
+  (Yasuo's Q1 -> Q2 -> Q3 lines up with his every-3rd-cast Whirlwind).
+- `"Hits"` can name clips (`"Spell1C": 0.3`) as well as `BasicAttack` / `SkillAttack`.
+- `"HideTemplateEffects": true` also switches off the template prefab's particle/trail effects (its slashes).
+- `"Warp": false` plays attack/skill clips at their own speed instead of stretching them to the game's timing;
+  the clip starts so that its hit lands on the game's hit.
+- `"Timings": { "SkillAttack": [1.0, 0.3] }` overrides the game's [duration, hit] (seconds) for the model, when
+  the ability's real hit time differs from the template's animation settings.
+- `"Vfx": [ { "Clip": "Spell1C", "At": 0.3, "Type": "Tornado", "Distance": 4, "Duration": 0.9, "Size": 1.3 } ]`
+  spawns an effect at that clip time; `Tornado` (built in code) travels `Distance` hero heights forward.
+- `"Cues": [ { "Trigger": "OnStatusStacksApplied", "Action": "DealDamageWithScalingAction", "Clip": "Spell4", "Cooldown": 1.5, "Burst": 1.2, "Blink": true } ]`
+  plays a clip when the game runs one of the hero's effects that has no animation (matched by trigger and action
+  type; Yasuo's Last Breath), with an optional wind burst. `"Blink": true` moves the model next to the action's
+  target for the clip and back afterwards (looks only, the game's character stays where it is).
+
+The game builds voice events from the `Key`
 (`event:/SFX/COMB/HEROES/Freddy/Freddy_skill_vo`); a random clip of that slot plays instead.
 `Mods\Tools\Voice\build_voice.py` fills the Voice folders from `voice_map.json` and normalizes loudness.
 
 Freddy's model, animations, portraits and sounds are made by the scripts in `Mods\Tools\CustomHeroes`
-(Blender 5.x, headless); the sources are in `Mods\SourceAssets\Heroes\Freddy`.
+(Blender 5.x, headless); the sources are in `Mods\SourceAssets\Heroes\Freddy`. Yasuo's model is a League
+export with its own clips; `yasuo_render.py` renders his portrait and clip preview frames, and
+`yasuo_fetch_audio.py` downloads his voice lines from the League wiki.

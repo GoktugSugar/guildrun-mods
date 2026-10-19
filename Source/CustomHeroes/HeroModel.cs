@@ -33,11 +33,33 @@ namespace CustomHeroes
         public readonly Dictionary<string, float> ClipHits = new(StringComparer.OrdinalIgnoreCase);
         public readonly Dictionary<string, (float duration, float hit)> Timings = new(StringComparer.OrdinalIgnoreCase);
 
+        readonly Dictionary<string, List<GlbClip>> _lists = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>The clips for a game animation ("A,B,C" in Model.Clips = several that take turns).</summary>
+        public List<GlbClip> ClipList(string state)
+        {
+            if (_lists.TryGetValue(state, out var list)) return list;
+            list = new List<GlbClip>();
+            if (ClipNames.TryGetValue(state, out var names))
+                foreach (var n in names.Split(','))
+                    if (Clips.TryGetValue(n.Trim(), out var c)) list.Add(c);
+            if (list.Count == 0)
+            {
+                if (state == "Move") list = ClipList("Idle");
+                else if (Clips.TryGetValue(state, out var c)) list.Add(c);
+            }
+            return _lists[state] = list;
+        }
+
         public GlbClip ClipFor(string state)
         {
-            if (ClipNames.TryGetValue(state, out var name) && Clips.TryGetValue(name, out var c)) return c;
-            return state == "Move" ? ClipFor("Idle") : Clips.TryGetValue(state, out c) ? c : null;
+            var l = ClipList(state);
+            return l.Count > 0 ? l[0] : null;
         }
+
+        /// <summary>Clip time of the hit: by clip name, else by game animation.</summary>
+        public float HitFor(GlbClip clip, string state)
+            => ClipHits.TryGetValue(clip.Name, out var h) || ClipHits.TryGetValue(state, out h) ? h : 0f;
     }
 
     internal static class HeroModel
@@ -106,6 +128,10 @@ namespace CustomHeroes
             int hidden = 0;
             foreach (var r in smrs) { r.enabled = false; r.forceRenderingOff = true; hidden++; }
             foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true)) { r.enabled = false; r.forceRenderingOff = true; hidden++; }
+            if (d.Model.HideTemplateEffects)
+                foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+                    if (r.GetIl2CppType().Name is "ParticleSystemRenderer" or "TrailRenderer" or "LineRenderer")
+                    { r.enabled = false; r.forceRenderingOff = true; hidden++; Plugin.L.LogInfo($"{d.Name}: template effect '{r.name}' off"); }
 
             var go = new GameObject(Prefix + d.Key);
             var gRoot = go.transform;
@@ -155,7 +181,7 @@ namespace CustomHeroes
                         if (b != null && (b.name.ToLowerInvariant().Contains("hips") || b.name.ToLowerInvariant().Contains("pelvis"))) { hips = b; break; }
                 if (hips != null) heroHips = root.InverseTransformPoint(hips.position).y;
             }
-            int rootIdx = model.Nodes.FindIndex(x => x.Name == "Root");
+            int rootIdx = model.Nodes.FindIndex(x => string.Equals(x.Name, "Root", StringComparison.OrdinalIgnoreCase));
             float modelHips = rootIdx >= 0 ? gRoot.InverseTransformPoint(tf[rootIdx].position).y : 0f;
             float ratio = heroHips > 0.05f && modelHips > 0.05f ? heroHips / modelHips : 1f;
             if (ratio == 1f) Plugin.L.LogWarning($"{d.Name}: no hip heights to match (template {heroHips:0.##}, model {modelHips:0.##}); model kept at its own size");
@@ -178,6 +204,8 @@ namespace CustomHeroes
                 if (list == null) return;
                 foreach (var t in list)
                     if (t != null) a.Timings[t.Type.ToString()] = (t.Duration.RawValue / 65536f, t.Hit.RawValue / 65536f);
+                foreach (var kv in d.Model.Timings)   // hero.json Model.Timings: [duration, hit]
+                    if (kv.Value != null && kv.Value.Length >= 2) a.Timings[kv.Key] = ((float)kv.Value[0], (float)kv.Value[1]);
                 Plugin.L.LogInfo($"{d.Name}: game animation timings " + string.Join(", ", a.Timings.Select(kv => $"{kv.Key} {kv.Value.duration:0.##}s hit {kv.Value.hit:0.##}s")));
             }
             catch (Exception e) { Plugin.L.LogWarning($"{d.Name}: animation timings: {e.Message}"); }
@@ -281,6 +309,16 @@ namespace CustomHeroes
         Vector3 _lastPos;
         float _moveTimer;
         bool _moving;
+        // next clip of each multi-clip animation; starts over each fight like the effects' every-Nth counters
+        // (Increment), so a Q1/Q2/Q3 cycle stays in step with an every-3rd-cast effect
+        readonly Dictionary<string, int> _turn = new();
+        bool _vfxDone;
+        float _cueReady;
+        bool _blink;                 // a Blink cue holds the model at its target (world pose) until the clip ends
+        Vector3 _blinkPos, _homePos;
+        Quaternion _blinkRot, _homeRot;
+
+        void OnEnable() => _turn.Clear();   // in case spawns are pooled between fights
 
         bool Init()
         {
@@ -303,6 +341,9 @@ namespace CustomHeroes
                 foreach (var r in _root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
                     if (!r.transform.IsChildOf(transform)) _template.Add(r);
                 foreach (var r in _root.GetComponentsInChildren<MeshRenderer>(true)) _template.Add(r);
+                if (_a.Def.Model.HideTemplateEffects)
+                    foreach (var r in _root.GetComponentsInChildren<Renderer>(true))
+                        if (!r.transform.IsChildOf(transform) && r.GetIl2CppType().Name is "ParticleSystemRenderer" or "TrailRenderer" or "LineRenderer") _template.Add(r);
                 var anim = _root.GetComponent<Animator>();
                 if (anim != null) { _anim = anim.Pointer; HeroModel.ByAnimator[_anim] = this; }
                 _lastPos = _root.position;
@@ -328,6 +369,7 @@ namespace CustomHeroes
         {
             if (!Init()) return;
             _paused = false;
+            if (_state == "Cue" && state == "BasicAttack") return;   // let a cue (ult) clip finish over auto attacks
             if (state is "Idle" or "Move")
             {   // the game's idle/move calls are frequent; only leave a one-shot clip when it has finished
                 if (_state == "Die") Play("Idle", 1f);   // resurrected
@@ -341,8 +383,17 @@ namespace CustomHeroes
 
         void Play(string state, float timescale)
         {
-            var clip = _a.ClipFor(state);
-            if (clip == null) return;
+            EndBlink();
+            var list = _a.ClipList(state);
+            if (list.Count == 0) return;
+            var clip = list[0];
+            if (list.Count > 1 && state is "BasicAttack" or "SkillAttack" or "Die")
+            {
+                _turn.TryGetValue(state, out int k);
+                clip = list[k % list.Count];
+                _turn[state] = k + 1;
+            }
+            _vfxDone = false;
             for (int i = 0; i < _tf.Length; i++) { _fromT[i] = _tf[i].localPosition; _fromR[i] = _tf[i].localRotation; _fromS[i] = _tf[i].localScale; }
             _fadeLeft = Fade;
             _clip = clip;
@@ -353,9 +404,87 @@ namespace CustomHeroes
             _gameDuration = _gameHit = _clipHit = 0;
             if (state is "BasicAttack" or "SkillAttack" && _a.Timings.TryGetValue(state, out var tm) && tm.duration > 0)
             {
-                _gameDuration = tm.duration / _speed;
-                _gameHit = tm.hit > 0 ? tm.hit / _speed : 0;
-                _clipHit = _a.ClipHits.TryGetValue(state, out var h) ? Mathf.Clamp(h, 0.01f, clip.Length - 0.01f) : 0;
+                float h = _a.HitFor(clip, state);
+                if (_a.Def.Model.Warp)
+                {
+                    _gameDuration = tm.duration / _speed;
+                    _gameHit = tm.hit > 0 ? tm.hit / _speed : 0;
+                    _clipHit = h > 0 ? Mathf.Clamp(h, 0.01f, clip.Length - 0.01f) : 0;
+                }
+                else if (tm.hit > 0 && h > 0)
+                    _elapsed = -Mathf.Max(0f, tm.hit / _speed - h / _speed);   // own speed; hold the pose until the hit lines up
+            }
+        }
+
+        /// <summary>A Model.Cues clip: plays at its own speed as a one-shot. Blink: on the cue's target, then back.</summary>
+        void PlayCue(CueDef cue, string target)
+        {
+            if (!_a.Clips.TryGetValue(cue.Clip ?? "", out var clip)) { Plugin.L.LogWarning($"Model '{name}': cue clip '{cue.Clip}' not in the model"); return; }
+            EndBlink();
+            if (cue.Blink && target != null) StartBlink(target);
+            for (int i = 0; i < _tf.Length; i++) { _fromT[i] = _tf[i].localPosition; _fromR[i] = _tf[i].localRotation; _fromS[i] = _tf[i].localScale; }
+            _fadeLeft = Fade;
+            _clip = clip; _state = "Cue"; _elapsed = 0; _speed = 1f; _oneShot = true; _paused = false;
+            _gameDuration = _gameHit = _clipHit = 0;
+            _vfxDone = false;
+            if (cue.Burst > 0)
+            {
+                var fwd = transform.forward; fwd.y = 0;
+                if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward;
+                TornadoVfx.Spawn(_blink ? _blinkPos : _root.position, fwd.normalized, HeroHeight() * (float)cue.Burst, 0f, 0.6f);
+            }
+        }
+
+        /// <summary>Moves the model (not the game's character) next to the target's view, facing it.</summary>
+        void StartBlink(string target)
+        {
+            Transform tv = null;
+            foreach (var v in Object.FindObjectsOfType<Ember.Simulation.UnityRuntime.Entities.View.EntityViewController>())
+            {
+                if (v == null) continue;
+                string id = null;
+                try { id = v.EntityId.Guid.ToString(); } catch { }
+                if (id == target) { tv = v.transform; break; }
+            }
+            if (tv == null) return;
+            var dir = tv.position - _root.position; dir.y = 0;
+            if (dir.sqrMagnitude < 1e-4f) return;
+            _homePos = transform.localPosition; _homeRot = transform.localRotation;
+            _blinkPos = tv.position - dir.normalized * HeroHeight() * 0.35f;
+            _blinkPos.y = _root.position.y;
+            _blinkRot = Quaternion.LookRotation(dir.normalized) * Quaternion.Euler(0, (float)_a.Def.Model.Yaw, 0);
+            _blink = true;
+            transform.position = _blinkPos; transform.rotation = _blinkRot;
+        }
+
+        void EndBlink()
+        {
+            if (!_blink) return;
+            _blink = false;
+            transform.localPosition = _homePos; transform.localRotation = _homeRot;
+        }
+
+        /// <summary>Height of the hero in world units right now (hips x 2; follows size growth).</summary>
+        float HeroHeight()
+        {
+            int root = _a.Glb.Nodes.FindIndex(x => string.Equals(x.Name, "Root", StringComparison.OrdinalIgnoreCase));
+            float hips = root >= 0 ? _tf[root].position.y - _root.position.y : 0f;
+            return hips > 0.05f ? hips * 2f : 2f * transform.lossyScale.y;
+        }
+
+        void SpawnVfx(float t)
+        {
+            if (_vfxDone) return;
+            foreach (var v in _a.Def.Model.Vfx)
+            {
+                if (v == null || t < v.At || !string.Equals(v.Clip, _clip.Name, StringComparison.OrdinalIgnoreCase)) continue;
+                _vfxDone = true;
+                var fwd = transform.forward; fwd.y = 0;
+                if (fwd.sqrMagnitude < 1e-4f) fwd = _root.forward;
+                float h = HeroHeight();
+                if (string.Equals(v.Type, "Tornado", StringComparison.OrdinalIgnoreCase))
+                    TornadoVfx.Spawn(_root.position + fwd.normalized * h * 0.4f, fwd.normalized, h * (float)v.Size, h * (float)v.Distance, (float)v.Duration);
+                else Plugin.L.LogWarning($"Model '{name}': unknown Vfx type '{v.Type}'");
             }
         }
 
@@ -389,10 +518,18 @@ namespace CustomHeroes
                     _moveTimer = movingNow == _moving ? 0 : _moveTimer + dt;
                     if (_moveTimer > 0.08f) { _moving = movingNow; _moveTimer = 0; }
                 }
+                if (_state != "Die" && _a.Def.Model.Cues.Count > 0)
+                {
+                    var cue = Cues.Take(_a.Def.Key, out var target);
+                    if (cue != null && Time.time >= _cueReady) { _cueReady = Time.time + (float)cue.Cooldown; PlayCue(cue, target); }
+                }
                 if (_clip == null) return;
                 if (!_paused) _elapsed += dt;
+                if (_blink) { transform.position = _blinkPos; transform.rotation = _blinkRot; }   // the hero's root keeps moving
+                if (_elapsed < 0) return;   // Warp off: holding the pose until the clip's hit lines up with the game's
 
                 float t = ClipTime();
+                if (_oneShot && _a.Def.Model.Vfx.Count > 0) SpawnVfx(t);
                 if (_oneShot && t >= _clip.Length)
                 {
                     if (_state == "Die") t = _clip.Length;          // hold the last frame

@@ -173,6 +173,22 @@ namespace CustomHeroes
             return true;
         }
 
+        /// <summary>Sets an object field (AoE entry, effect array...) of a live IL2CPP object. False if it has no such field.</summary>
+        public static bool SetRefField(IntPtr obj, string name, IntPtr value)
+        {
+            var (fname, _, field) = FieldInfo(Native.il2cpp_object_get_class(obj), name);
+            if (fname == null) return false;
+            Native.il2cpp_gc_wbarrier_set_field(obj, obj + Native.il2cpp_field_get_offset(field), value);
+            return true;
+        }
+
+        /// <summary>Value of an object field of a live IL2CPP object, or zero.</summary>
+        public static IntPtr GetRefField(IntPtr obj, string name)
+        {
+            var (fname, _, field) = FieldInfo(Native.il2cpp_object_get_class(obj), name);
+            return fname == null ? IntPtr.Zero : *(IntPtr*)(obj + Native.il2cpp_field_get_offset(field));
+        }
+
         static double Num(JsonElement v) => v.ValueKind == JsonValueKind.String ? double.Parse(v.GetString(), CultureInfo.InvariantCulture) : v.GetDouble();
 
         static string FpText(double v) => v.ToString("0.00####", CultureInfo.InvariantCulture);

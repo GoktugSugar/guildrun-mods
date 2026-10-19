@@ -1,0 +1,19 @@
+SKILL_VO
+    0.00s  "?"  (r_hit)
+PURCHASE_VO
+    2.75s  "Rock solid."  (select)
+    3.22s  "I'm moving as fast as I can."  (move_5)
+    1.34s  "Got it."  (move_4)
+DEATH_VO
+    3.39s  "Malphite groans."  (death_0)
+    3.33s  "Malphite groans."  (death_1)
+    3.60s  "Malphite groans."  (death_2)
+RANKUP_B_VO
+    2.40s  "Stay down!"  (attack_2)
+    2.39s  "Smash!"  (attack_4)
+RANKUP_A_VO
+    1.83s  "Kill."  (attack_5)
+    2.29s  "Malphite laughs triumphantly."  (laugh_1)
+RANKUP_S_VO
+    2.80s  "You will lose."  (ban)
+    3.51s  "Malphite laughs triumphantly."  (laugh_2)

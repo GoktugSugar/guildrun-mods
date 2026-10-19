@@ -1,0 +1,8 @@
+{
+ "SKILL_VO": ["q3_1", "q3_0", "r_2", "w_0"],
+ "PURCHASE_VO": ["select", "move_5", "move_6"],
+ "DEATH_VO": ["death_0", "death_1"],
+ "RANKUP_B_VO": ["attack_12", "attack_13"],
+ "RANKUP_A_VO": ["attack_11", "move_0"],
+ "RANKUP_S_VO": ["r_0", "ban"]
+}

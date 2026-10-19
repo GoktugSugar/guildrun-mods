@@ -1,0 +1,286 @@
+{
+ "attack_0": {
+  "s": 1.96,
+  "text": "I'll give you the easy way out."
+ },
+ "attack_1": {
+  "s": 2.47,
+  "text": "Kill me? You can try."
+ },
+ "attack_10": {
+  "s": 2.47,
+  "text": "People keep running into my blade."
+ },
+ "attack_11": {
+  "s": 2.17,
+  "text": "I alone decide my fate."
+ },
+ "attack_12": {
+  "s": 2.37,
+  "text": "One blade, one purpose."
+ },
+ "attack_13": {
+  "s": 1.74,
+  "text": "Some things never dull."
+ },
+ "attack_14": {
+  "s": 3.16,
+  "text": "It's just death. Nothing serious."
+ },
+ "attack_2": {
+  "s": 1.08,
+  "text": "Make it quick."
+ },
+ "attack_3": {
+  "s": 1.88,
+  "text": "No cure for fools."
+ },
+ "attack_4": {
+  "s": 1.32,
+  "text": "No more running."
+ },
+ "attack_5": {
+  "s": 2.63,
+  "text": "Some mistakes you can't make twice."
+ },
+ "attack_6": {
+  "s": 2.26,
+  "text": "I will not die dishonored."
+ },
+ "attack_7": {
+  "s": 2.19,
+  "text": "Don't start what I'll finish."
+ },
+ "attack_8": {
+  "s": 3.32,
+  "text": "At peace with yourself? You will be."
+ },
+ "attack_9": {
+  "s": 2.41,
+  "text": "It is not yet time to die."
+ },
+ "ban": {
+  "s": 2.8,
+  "text": "No cure for fools."
+ },
+ "basicattack_0": {
+  "s": 0.46,
+  "text": "Yasuo grunts."
+ },
+ "basicattack_1": {
+  "s": 0.46,
+  "text": "Yasuo grunts."
+ },
+ "basicattack_2": {
+  "s": 0.29,
+  "text": "Yasuo grunts."
+ },
+ "basicattack_3": {
+  "s": 0.39,
+  "text": "Yasuo grunts."
+ },
+ "death_0": {
+  "s": 3.21,
+  "text": "Yasuo groans."
+ },
+ "death_1": {
+  "s": 2.87,
+  "text": "Yasuo groans."
+ },
+ "death_2": {
+  "s": 2.86,
+  "text": "Yasuo groans."
+ },
+ "death_3": {
+  "s": 3.2,
+  "text": "Yasuo groans."
+ },
+ "edash_0": {
+  "s": 0.62,
+  "text": "Yasuo grunts."
+ },
+ "edash_1": {
+  "s": 0.67,
+  "text": "Yasuo grunts."
+ },
+ "edash_2": {
+  "s": 0.6,
+  "text": "Yasuo grunts."
+ },
+ "edash_3": {
+  "s": 0.62,
+  "text": "Yasuo grunts."
+ },
+ "laugh_0": {
+  "s": 5.74,
+  "text": "Yasuo laughs, then sighs."
+ },
+ "laugh_1": {
+  "s": 4.85,
+  "text": "Yasuo laughs."
+ },
+ "laugh_2": {
+  "s": 5.59,
+  "text": "Yasuo laughs, then sighs."
+ },
+ "laugh_3": {
+  "s": 5.06,
+  "text": "Yasuo laughs, then sighs."
+ },
+ "move_0": {
+  "s": 2.19,
+  "text": "This story is not yet finished."
+ },
+ "move_1": {
+  "s": 2.73,
+  "text": "Justice. That's a pretty word."
+ },
+ "move_10": {
+  "s": 2.06,
+  "text": "Never could stay in one place."
+ },
+ "move_11": {
+  "s": 2.55,
+  "text": "Honor is in the heart, not the name."
+ },
+ "move_12": {
+  "s": 2.2,
+  "text": "Sleep is for the guiltless."
+ },
+ "move_13": {
+  "s": 2.98,
+  "text": "My honor left a long time ago."
+ },
+ "move_14": {
+  "s": 2.43,
+  "text": "I will not forget who I am."
+ },
+ "move_15": {
+  "s": 2.23,
+  "text": "A wanderer isn't always lost."
+ },
+ "move_16": {
+  "s": 2.82,
+  "text": "A sword's poor company for a long road."
+ },
+ "move_17": {
+  "s": 2.72,
+  "text": "Hmph... dying's the easy part."
+ },
+ "move_18": {
+  "s": 2.54,
+  "text": "The road to ruin is shorter than you think."
+ },
+ "move_2": {
+  "s": 2.31,
+  "text": "This blade never gets any lighter."
+ },
+ "move_3": {
+  "s": 2.23,
+  "text": "Is a leaf's only purpose to fall?"
+ },
+ "move_4": {
+  "s": 2.34,
+  "text": "Just looking for a road home."
+ },
+ "move_5": {
+  "s": 2.92,
+  "text": "Follow the wind, but watch your back."
+ },
+ "move_6": {
+  "s": 2.41,
+  "text": "I will follow this path until the end."
+ },
+ "move_7": {
+  "s": 2.4,
+  "text": "Virtue is no more than a luxury."
+ },
+ "move_8": {
+  "s": 2.91,
+  "text": "Hmph. One step ahead of the past."
+ },
+ "move_9": {
+  "s": 2.16,
+  "text": "No one is promised tomorrow."
+ },
+ "movefirst_0": {
+  "s": 4.32,
+  "text": "Whispers on the wind speak of a masked swordsman with two blades."
+ },
+ "movefirst_1": {
+  "s": 4.91,
+  "text": "My brother returned. Seems dying was the easy part."
+ },
+ "q1_0": {
+  "s": 0.92,
+  "text": "Yasuo shouts."
+ },
+ "q1_1": {
+  "s": 0.87,
+  "text": "Yasuo shouts."
+ },
+ "q1_2": {
+  "s": 0.76,
+  "text": "Yasuo shouts."
+ },
+ "q1_3": {
+  "s": 0.58,
+  "text": "Yasuo shouts."
+ },
+ "q2_0": {
+  "s": 0.55,
+  "text": "Ton!"
+ },
+ "q2_1": {
+  "s": 0.36,
+  "text": "Hasag!"
+ },
+ "q3_0": {
+  "s": 0.96,
+  "text": "Aseryo!"
+ },
+ "q3_1": {
+  "s": 0.67,
+  "text": "Hasagi!"
+ },
+ "r_0": {
+  "s": 1.74,
+  "text": "Sorye ge ton!"
+ },
+ "r_1": {
+  "s": 1.26,
+  "text": "Igei ton!"
+ },
+ "r_2": {
+  "s": 0.92,
+  "text": "Sorye!"
+ },
+ "select": {
+  "s": 4.26,
+  "text": "Death is like the wind; always by my side."
+ },
+ "taunt_0": {
+  "s": 6.52,
+  "text": "If you've come to kill me... I hope you brought friends."
+ },
+ "taunt_1": {
+  "s": 6.58,
+  "text": "There is only death... mine, or yours!"
+ },
+ "taunt_2": {
+  "s": 6.33,
+  "text": "Killing people is a bad habit... but I can't seem to quit."
+ },
+ "w_0": {
+  "s": 1.06,
+  "text": "Face the wind!"
+ },
+ "w_1": {
+  "s": 0.92,
+  "text": "Choryon!"
+ },
+ "w_2": {
+  "s": 0.67,
+  "text": "Son!"
+ }
+}

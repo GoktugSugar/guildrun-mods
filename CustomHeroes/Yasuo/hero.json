@@ -1,0 +1,176 @@
+// Yasuo, the Unforgiven: a new hero for Guildrun (CustomHeroes plugin). Copies Dragomir's data, then replaces what's below.
+// Effects use the game's effect system: Trigger / Target / Attach / Condition / Actions, see Mods\CustomHeroes\README.md.
+//
+// A Duelist built around his Q: Steel Tempest is a cheap, fast single-target thrust, and every 3rd cast in a fight
+// also throws a Whirlwind that hits and Stuns everything in front of him. His ult, Last Breath, is a specialization
+// that punishes every Stun on the enemy team, his own Whirlwinds or anyone else's (Ming, Zuri, Freddy).
+// Look: the League model with its own League clips (Assets\yasuo.glb), portraits rendered from it
+// (Mods\Tools\CustomHeroes\yasuo_render.py), voice lines from the League wiki (yasuo_fetch_audio.py).
+{
+  "Id": 29,
+  "Key": "Yasuo",
+  "Name": "Yasuo",
+  "Template": 24,                        // Dragomir: melee, starts with his active, quick sword-like timings (skill hit 0.25 s)
+  "Pools": ["AllHeroes", "Duelists", "Duelists and Warriors"],   // Duelist shops, not Dragomir's Assassin ones
+  "Guild": "A Temple",
+  "Classes": ["Duelist"],
+  "Gender": "Masculine",
+  "Tags": ["Crit", "Stun"],
+
+  "Model": {
+    "File": "Assets/yasuo.glb",
+    "HipHeight": 0.75,                   // set by hand (Nyx measured 0.34 and made him tiny); Skorn's are 0.83
+    "HideTemplateEffects": true,         // no Dragomir slashes/particles on top of Yasuo
+    "Scale": 1.2,                        // the user asked for 20% bigger
+    // League's clips. Attacks take turns like his auto attack chain; Steel Tempest goes Q1 -> Q2 -> Q3 (the
+    // tornado throw) each fight, in step with the every-3rd-cast Whirlwind.
+    "Clips": {
+      "Idle": "Idle1_Raw",
+      "Move": "Run1_Raw",
+      "BasicAttack": "Attack1,Attack2,Attack3,Attack4",
+      "SkillAttack": "Spell1A,Spell1B,Spell1C",
+      "Die": "Death"
+    },
+    "Warp": false,                       // play the clips at their own speed (League timing), hit lined up with the game's
+    "Hits": { "Attack1": 0.22, "Attack2": 0.3, "Attack3": 0.22, "Attack4": 0.22, "Spell1A": 0.28, "Spell1B": 0.25, "Spell1C": 0.3 },
+    "Timings": { "SkillAttack": [1.0, 0.3] },   // Steel Tempest hits 0.3 s into the cast (see Active below)
+    "Vfx": [
+      { "Clip": "Spell1C", "At": 0.3, "Type": "Tornado", "Distance": 6, "Duration": 1.3, "Size": 2.0 }
+    ],
+    // Last Breath (The Unforgiven) is a passive strike with no animation of its own: when the game runs it (an
+    // OnStatusStacksApplied effect with a DealDamageWithScalingAction, the strike on the stunned enemy), the model
+    // blinks to that enemy, plays his League ult (leap, slashes, landing) with a wind burst there, and comes back.
+    // Looks only: the game's Yasuo never moves. Several Stuns at once play it once (on the first one).
+    "Cues": [
+      { "Trigger": "OnStatusStacksApplied", "Action": "DealDamageWithScalingAction", "Clip": "Spell4", "Cooldown": 1.5, "Burst": 1.2, "Blink": true }
+    ]
+  },
+  "Portraits": {
+    "Source": "Assets/Portraits/_source.png",   // his idle stance, rendered from the .glb
+    "Folder": "Assets/Portraits",               // Yasuo_round / Square_Portrait_Yasuo: head from his League splash (yasuo_icons.py)
+    "Scale": 0.85
+  },
+  "Voice": "Assets/Voice",
+
+  "Lore": {
+    "Title": "The Unforgiven",
+    "Quote": "Death is like the wind; always by my side.",
+    "CurrentWork": "The Temple found him at the edge of a rift, a swordsman from a land nobody has charted, accused at home of a murder he did not commit. He took the Temple's bed and bread in exchange for his blade, and he sleeps with it drawn.",
+    "Motivation": "He is looking for the one who truly killed his master. Until then, every fight is practice, and the wind keeps score."
+  },
+
+  // Duelists run 650-1000 HP / 0.42-0.54 attack speed; Nyx is 800 HP / 38 Defense / 38 Attack / 50 Mana.
+  // Yasuo trades some HP for a smaller mana bar, so Steel Tempest comes around often.
+  "Stats": {
+    "MaxHealth": 750,
+    "MaxMana": 40,
+    "StartingMana": 20,
+    "ManaRegen": 4,
+    "Defense": 34,
+    "BaseAttackDamage": 37,
+    "BaseAttackSpeed": 0.53,
+    "AttackRange": 1,
+    "Crit": 15,
+    "StartWithActiveAbility": 1
+  },
+
+  "Active": {
+    "Id": 31,
+    "Template": 24,                      // Dragomir's melee strike: hits his target in place (the monster ability before teleported)
+    "Name": "Steel Tempest",
+    "Description": "Thrust forward, dealing [60+120|140|160|180_Attack]<statcalc_damage> damage.\n\nEvery [3rd cast]<bold> also unleashes a [Whirlwind:]<bold> its target and every enemy next to it take [120+200|225|250|275_Attack]<statcalc_damage> damage and are [Stunned]<stun> for 1.5 seconds.",
+    "Attacks": [
+      { "Delay": 0.3, "Damage": 60, "ExtraDamagePerRank": 0, "Scalings": [
+          { "Stat": "Attack", "Factors": [1.2, 1.4, 1.6, 1.8] } ] }
+    ],
+    "Effects": [
+      // Whirlwind, every 3rd cast in a fight: the effect "Increment" counts casts (the game's own list of countable
+      // triggers includes OnAbilityCast, EffectTrace logs it). It hits the cast's target and every enemy next to it,
+      // like the Dragon's splash (IsAdjacentToTriggerTargetCondition). IsInFrontOfOwner is the team formation and
+      // IsInRangeOfOwner never landed a Stun; the last effect keeps it, Stun only, so the trace shows if it ever does.
+      { "Trigger": "OnAbilityCast", "Target": "TriggerTarget", "Attach": "OwnerIsSource", "Increment": 3,
+        "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 120,
+              "Scalings": [ { "Stat": "Attack", "Factors": [2.0, 2.25, 2.5, 2.75] } ] }, { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] },
+      { "Trigger": "OnAbilityCast", "Target": "AllEnemies", "Attach": "OwnerIsSource", "Increment": 3,
+        "Condition": { "Type": "IsAdjacentToTriggerTargetCondition" },
+        "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 120,
+              "Scalings": [ { "Stat": "Attack", "Factors": [2.0, 2.25, 2.5, 2.75] } ] }, { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] },
+      { "Trigger": "OnAbilityCast", "Target": "AllEnemies", "Attach": "OwnerIsSource", "Increment": 3,
+        "Condition": { "Type": "IsInRangeOfOwnerCondition" },
+        "Actions": [ { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] }
+    ]
+  },
+
+  "Specializations": [
+    {
+      // His ult. Fires on any Stun a Hero applies to an enemy (OnStatusStacksApplied + SourceIsHero; built like Skorn's
+      // status passive, which uses the same trigger and conditions).
+      // Karsu's Warrior specialization as the base (class + icon); Warrior class bonus = +40 Attack like Karsu's.
+      "Id": 2901,
+      "Template": 2003,
+      "Name": "The Unforgiven",
+      "PassiveName": "Last Breath",
+      "Class": "Warrior",
+      "Tags": ["Stun"],
+      "ClassDescription": "Gain the [Warrior]<warrior> class and [40 Attack]<attack>.",
+      "Description": "Whenever an enemy is [Stunned,]<stun> Yasuo strikes it for [100+150|200|250|300_Attack]<statcalc_damage> damage and gains [5 Attack]<attack> for the rest of combat.",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Attack", "Value": 40 } ] },
+        { "Trigger": "OnStatusStacksApplied", "Target": "TriggerTarget", "Attach": "SourceIsHero",
+          "Condition": { "Type": "CompoundCondition", "_conditions": [
+              { "Type": "IsTriggerOfStatusCondition", "_status": "Stun" },
+              { "Type": "IsTriggerTargetEnemyCondition" } ] },
+          "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 100,
+              "Scalings": [ { "Stat": "Attack", "Factors": [1.5, 2.0, 2.5, 3.0] } ] } ] },
+        { "Trigger": "OnStatusStacksApplied", "Target": "Owner", "Attach": "SourceIsHero",
+          "Condition": { "Type": "CompoundCondition", "_conditions": [
+              { "Type": "IsTriggerOfStatusCondition", "_status": "Stun" },
+              { "Type": "IsTriggerTargetEnemyCondition" } ] },
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Attack", "Value": 5 } ] }
+      ]
+    },
+    {
+      // Nyx's own Assassin specialization as the base (class + icon); the passive is Yasuo's Way of the Wanderer.
+      // Flow shields scale with Crit (45 Crit with the Assassin bonus = 60 + 112 at rank B).
+      "Id": 2902,
+      "Template": 701,
+      "Name": "The Wanderer",
+      "PassiveName": "Way of the Wanderer",
+      "Class": "Assassin",
+      "Tags": ["Crit", "Shields"],
+      "ClassDescription": "Gain the [Assassin]<assassin> class and [30 Crit]<crit>.",
+      "Description": "[Flow:]<bold> at the start of combat and every [6th auto attack,]<bold> gain [60+200|250|300|350_Crit]<statcalc_shield> [Shields.]<shield>",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Crit", "Value": 30 } ] },
+        { "Trigger": "OnCombatStart", "Target": "Owner",
+          "Actions": [ { "Type": "ApplyShieldWithScalingAction", "BaseShield": 60,
+              "Scalings": [ { "Stat": "Crit", "Factors": [2.0, 2.5, 3.0, 3.5] } ] } ] },
+        { "Trigger": "OnAutoAttack", "Target": "Owner", "Attach": "OwnerIsSource", "Increment": 6,
+          "Actions": [ { "Type": "ApplyShieldWithScalingAction", "BaseShield": 60,
+              "Scalings": [ { "Stat": "Crit", "Factors": [2.0, 2.5, 3.0, 3.5] } ] } ] }
+      ]
+    },
+    {
+      // A second Whirlwind counter on top of Steel Tempest's own every-3rd one: Whirlwinds on casts 2, 3, 4, 6 (two), 8...
+      // Attack Speed adds up once per cast for the rest of the fight (like Karsu).
+      "Id": 2903,
+      "Template": 2001,                  // Karsu's Stall/Crit specialization (icon)
+      "Name": "The Tempest",
+      "Tags": ["Stun", "Stall"],
+      "Description": "Every [2nd cast,]<bold> [Steel Tempest]<bold> unleashes an extra [Whirlwind.]<bold>\n\nEach [cast,]<bold> gain [4 Attack Speed]<attackspeed> for the rest of combat.",
+      "Effects": [
+        { "Trigger": "OnAbilityCast", "Target": "TriggerTarget", "Attach": "OwnerIsSource", "Increment": 2,
+          "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 120,
+                "Scalings": [ { "Stat": "Attack", "Factors": [2.0, 2.25, 2.5, 2.75] } ] }, { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] },
+        { "Trigger": "OnAbilityCast", "Target": "AllEnemies", "Attach": "OwnerIsSource", "Increment": 2,
+          "Condition": { "Type": "IsAdjacentToTriggerTargetCondition" },
+          "Actions": [ { "Type": "DealDamageWithScalingAction", "BaseDamage": 120,
+                "Scalings": [ { "Stat": "Attack", "Factors": [2.0, 2.25, 2.5, 2.75] } ] }, { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1.5 } ] },
+        { "Trigger": "OnAbilityCast", "Target": "Owner", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "AttackSpeed", "Value": 4 } ] }
+      ]
+    }
+  ]
+}

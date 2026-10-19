@@ -4,8 +4,14 @@ A **Guildrun Demo** (Leyline, Steam) mod that adds brand-new heroes to the game,
 has its own stats, active ability, specializations, 3D model, animations, portraits and voice lines. It joins the
 shop and the starting bundles like any other hero.
 
-Ships with **Freddy Fazbear**: a Vanguard of Aegis Global whose *Jumpscare!* stuns everything around him and makes
-him bigger and tougher for the rest of the fight.
+Ships with three heroes:
+
+- **Freddy Fazbear**: a Vanguard of Aegis Global whose *Jumpscare!* stuns everything around him and makes him
+  bigger and tougher for the rest of the fight.
+- **Yasuo** (League of Legends): a Duelist of A Temple. *Steel Tempest* strikes, every third cast sends out a
+  whirlwind that stuns, and *Last Breath* strikes any enemy that gets stunned.
+- **Malphite** (League of Legends): a Tank of A Temple. *Unstoppable Force* charges an enemy and stuns it, the
+  setup for Yasuo's Last Breath.
 
 The repo also includes the full source, the tools and the raw assets behind the mod.
 
@@ -38,8 +44,8 @@ Mono builds won't work.
 1. Download `GuildrunCustomHeroes-<version>.zip` from [Releases](../../releases).
 2. Extract it into the game folder (the same folder as `Guildrun.exe`). It adds:
    - `BepInEx\plugins\CustomHeroes.dll`
-   - `Mods\CustomHeroes\Freddy\` (Freddy's data, model, portraits and voice)
-3. Start the game. Freddy shows up in the shop and the starting bundles.
+   - `Mods\CustomHeroes\Freddy\`, `Yasuo\`, `Malphite\` (each hero's data, model, portraits and voice)
+3. Start the game. The heroes show up in the shop and the starting bundles. To leave one out, delete its folder.
 
 ### Uninstall
 
@@ -86,10 +92,11 @@ The build copies `CustomHeroes.dll` to `BepInEx\plugins`. Close the game first, 
 ## Credits
 
 See [CREDITS.md](CREDITS.md). Freddy Fazbear and Five Nights at Freddy's belong to Scott Cawthon; the movie
-model is by its original creators, from the pack by **ubuntutu** on DeviantArt. Guildrun belongs to Leyline.
+model is by its original creators, from the pack by **ubuntutu** on DeviantArt. Yasuo, Malphite and League of
+Legends belong to Riot Games. Guildrun belongs to Leyline.
 This is a fan project and isn't affiliated with any of them.
 
 ## License
 
-The code and tools are under the [MIT License](LICENSE). Third-party assets (the Freddy model, textures, sounds)
+The code and tools are under the [MIT License](LICENSE). Third-party assets (models, textures, splash art, sounds)
 stay with their owners; see [CREDITS.md](CREDITS.md).
