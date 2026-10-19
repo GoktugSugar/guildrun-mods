@@ -11,7 +11,7 @@
   "Guild": "Aegis Global",
   "Classes": ["Vanguard"],
   "Gender": "Masculine",
-  "Tags": ["Stun", "Burn", "Shards"],
+  "Tags": ["Stun", "Burn", "Rush", "Shards"],
 
   // Look: his own model with its own animation clips, portraits composed from a render, his own voice lines.
   "Model": {
@@ -51,8 +51,8 @@
     "Id": 30,
     "Template": 21,                      // Ming's "Searing Mantra": damage and Stun to all surrounding enemies
     "Name": "Jumpscare!",
-    "Description": "Let out a horrifying screech, dealing [100+20|25|30|35_MaxHealth+100_Magic]<statcalc_damage> damage and [Stunning]<stun> all surrounding enemies for 2 seconds.\n\nEach [cast,]<bold> Freddy grows in size and gains [0+8_MaxHealth]<statcalc_maxhp> [Max HP]<maxhp> for the rest of combat. This ability stacks.",
-    "ActionFields": { "_stunDuration": 2, "_burnPerRush": 0 },
+    "Description": "Let out a horrifying screech, dealing [100+20|25|30|35_MaxHealth+100_Magic]<statcalc_damage> damage and [Stunning]<stun> all surrounding enemies for 1 second.\n\nEach [cast,]<bold> Freddy grows in size and gains [0+8_MaxHealth]<statcalc_maxhp> [Max HP]<maxhp> for the rest of combat. This ability stacks.\n\nFor [Rush (10),]<rush> Freddy gains [5 Mana]<mana> on [auto attack.]<bold>",
+    "ActionFields": { "_stunDuration": 1, "_burnPerRush": 0 },
     "Attacks": [
       { "Delay": 0.85, "Damage": 100, "ExtraDamagePerRank": 0, "Scalings": [
           { "Stat": "MaxHealth", "Factors": [0.20, 0.25, 0.30, 0.35] },
@@ -66,26 +66,39 @@
               { "Trigger": "Constant", "Target": "Owner",
                 "Actions": [
                   { "Type": "ModifyStatFromStatAction", "StatTypeSource": "MaxHealth", "StatTypeTarget": "MaxHealth", "Percent": 0.08 },
-                  { "Type": "ModifySizeAction", "Delta": 0.08 } ] } ] } ] }
+                  { "Type": "ModifySizeAction", "Delta": 0.08 } ] } ] },
+          // The Glamrock (Mage class): the screech Stuns all surrounding enemies again 1 s after it hits (hit at 0.85 s,
+          // this fires at 1.85 s). A block that lasts 2 s holding one interval effect, so it doesn't delay the cast.
+          { "Delay": 0, "Duration": 2.0, "Effects": [
+              { "Trigger": "OnInterval", "Interval": 1.85, "Target": "AllEnemies",
+                "Condition": { "Type": "CompoundCondition", "_conditions": [
+                    { "Type": "IsInRangeOfOwnerCondition" },
+                    { "Type": "SourceHasClassCondition", "ClassId": "Mage" } ] },
+                "Actions": [ { "Type": "ApplyStatusWithDurationAction", "Status": "Stun", "Amount": 1, "Duration": 1 } ] } ] } ] }
+    ],
+    // For Rush (10): mana on every auto attack (the game's GiveManaAction)
+    "Effects": [
+      { "Trigger": "OnAutoAttack", "Target": "Owner", "Attach": "OwnerIsSource", "Rush": 10,
+        "Actions": [ { "Type": "GiveManaAction", "Amount": 5 } ] }
     ]
   },
 
   "Specializations": [
     {
       "Id": 2801,
-      "Template": 1702,                  // Ratna's Mystic specialization
+      "Template": 803,                   // a Mage specialization (Pollen's)
       "Name": "The Glamrock",
-      "Class": "Mystic",
-      "Tags": ["Shields"],
-      "ClassDescription": "Gain the [Mystic]<mystic> class and [4 Mana Regen]<manaregen>.",
-      "Description": "On [cast,]<bold> the Hero with the lowest [% Max HP]<maxhp> gains [50+8|10|12|14_MaxHealth]<statcalc_shield> [Shields]<shield>.",
+      "Class": "Mage",
+      "Tags": ["Stun"],
+      "ClassDescription": "Gain the [Mage]<mage> class and [30 Magic]<magic>.",
+      "Description": "[Jumpscare!]<bold> [Stuns]<stun> all surrounding enemies again 1 second after it hits.\n\nEach [cast,]<bold> Freddy gains [0+4_MaxHealth]<statcalc_magic> [Magic]<magic> for the rest of combat.",
+      // the second Stun lives in Jumpscare! (it checks for the Mage class); each cast turns half of the growth's
+      // Max HP (4% of Max HP) into Magic, which Jumpscare! scales with
       "Effects": [
         { "Trigger": "Constant", "Target": "Owner",
-          "Actions": [ { "Type": "ModifyStatAction", "StatType": "ManaRegen", "Value": 4 } ] },
-        { "Trigger": "OnAbilityCast", "Target": "AllHeroes", "Attach": "OwnerIsSource",
-          "Condition": { "Type": "IsEffectTargetLowestPercentHealthHeroCondition" },
-          "Actions": [ { "Type": "ApplyShieldWithScalingAction", "BaseShield": 50,
-              "Scalings": [ { "Stat": "MaxHealth", "Factors": [0.08, 0.10, 0.12, 0.14] } ] } ] }
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Magic", "Value": 30 } ] },
+        { "Trigger": "OnAbilityCast", "Target": "Owner", "Attach": "OwnerIsSource",
+          "Actions": [ { "Type": "ModifyStatFromStatAction", "StatTypeSource": "MaxHealth", "StatTypeTarget": "Magic", "Percent": 0.04 } ] }
       ]
     },
     {
@@ -99,7 +112,7 @@
       "PassiveTemplate": 102101,         // Ming's Inner Flame (icon)
       "Name": "The Molten",
       "Tags": ["Burn", "Rush", "Backup"],
-      "Description": "[Jumpscare!]<bold> absorbs up to [100 Burn]<burn> from each enemy it hits. Freddy gains [20 Max HP]<maxhp> per [10 Burn]<burn> absorbed for the rest of combat.\n\nFor [Rush (15),]<rush> whenever a [Vanguard]<vanguard> is [auto attacked]<bold> inflict [5 Burn]<burn> on the attacker. [Backup.]<backup>",
+      "Description": "[Jumpscare!]<bold> absorbs up to [100 Burn]<burn> from each enemy it hits. Freddy gains [20 Max HP]<maxhp> per [10 Burn]<burn> absorbed for the rest of combat, and permanently gains [5 Max HP]<maxhp> for each enemy he absorbs [30+ Burn]<burn> from.\n\nFor [Rush (15),]<rush> whenever a [Vanguard]<vanguard> is [auto attacked]<bold> inflict [5 Burn]<burn> on the attacker. [Backup.]<backup>",
       "Effects": [
         { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 10 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
         { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 20 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
@@ -111,6 +124,9 @@
         { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 80 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
         { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 90 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
         { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 100 }, "Actions": [ { "Type": "ModifyStatAction", "StatType": "MaxHealth", "Value": 20 } ] },
+        // Permanent: each enemy that still has 30+ Burn when Jumpscare! absorbs it gives 5 Max HP for the rest of the run
+        // (the game's ModifyPermanentStatAction, like Logan's on-kill Attack).
+        { "Trigger": "OnAbilityDamageDealt", "Target": "Owner", "Attach": "OwnerIsSource", "Condition": { "Type": "DoesTriggerTargetHaveAmountOfStatusCondition", "Status": "Burn", "Amount": 30 }, "Actions": [ { "Type": "ModifyPermanentStatAction", "StatType": "MaxHealth", "Value": 5 } ] },
         { "Trigger": "OnAbilityDamageDealt", "Target": "TriggerTarget", "Attach": "OwnerIsSource",
           "Actions": [ { "Type": "DealInstantBurnDamageAndReduceStacksAction", "StacksToReduceAndDeal": 100 } ] },
         // Built like Niklas's The Hoarder ("whenever a Vanguard or Tank is auto attacked"): an auto attack received
@@ -127,11 +143,15 @@
       "PassiveTemplate": 101603,         // Gustav's shard passive (icon)
       "Name": "The Golden",
       "PassiveName": "It's Me",
+      "Class": "Mystic",
+      "ClassDescription": "Gain the [Mystic]<mystic> class and [4 Mana Regen]<manaregen>.",
       "Tags": ["Rush", "Shards", "Backup"],
       "Description": "Increase the duration of [Rush]<rush> abilities by 3 seconds. [Backup.]<backup>\n\nOn [Rush]<rush> trigger, gain [2 Mana Regen]<manaregen> and generate [1 Shard.]<shard>",
       "Effects": [
         // The game's "Rush abilities last X seconds longer" action. Priority 0 like Ming's The Enlightened, so it
         // applies before any Rush starts.
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "ManaRegen", "Value": 4 } ] },
         { "Trigger": "Constant", "Target": "Player", "Priority": 0, "Backup": true,
           "Actions": [ { "Type": "IncreaseRushDurationAction", "Duration": 3 } ] },
         // On Rush trigger like Rip's The Glutton (OnRushStart, any Rush). Mana Regen adds up for the rest of the
