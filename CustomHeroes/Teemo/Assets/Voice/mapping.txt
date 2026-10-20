@@ -1,0 +1,19 @@
+SKILL_VO
+    0.70s  "Teemo laughs."  (laugh_0)
+    0.81s  "Teemo laughs."  (laugh_1)
+    1.25s  "Teemo laughs."  (laugh_2)
+    1.45s  "That's gotta sting."  (move_6)
+PURCHASE_VO
+    3.00s  "Captain Teemo on duty."  (select)
+    1.21s  "Armed and ready."  (move_0)
+    1.10s  "I'll scout ahead!"  (move_5)
+DEATH_VO
+    0.98s  "Teemo exhales."  (death_0)
+    0.81s  "Teemo exhales."  (death_1)
+RANKUP_B_VO
+    2.06s  "Hut, two, three, four."  (move_3)
+    0.92s  "Yes, sir!"  (move_4)
+RANKUP_A_VO
+    2.28s  "Size doesn't mean everything."  (joke)
+RANKUP_S_VO
+    3.91s  "Never underestimate the power of the Scout's code."  (taunt)

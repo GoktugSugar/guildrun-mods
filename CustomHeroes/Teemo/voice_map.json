@@ -1,0 +1,8 @@
+{
+ "SKILL_VO": ["laugh_0", "laugh_1", "laugh_2", "move_6"],
+ "PURCHASE_VO": ["select", "move_0", "move_5"],
+ "DEATH_VO": ["death_0", "death_1"],
+ "RANKUP_B_VO": ["move_3", "move_4"],
+ "RANKUP_A_VO": ["joke"],
+ "RANKUP_S_VO": ["taunt"]
+}

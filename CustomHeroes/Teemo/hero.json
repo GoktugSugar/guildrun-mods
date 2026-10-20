@@ -1,0 +1,153 @@
+// Teemo, the Swift Scout: a new hero for Guildrun (CustomHeroes plugin). Copies Ratna's data, then replaces what's below.
+// Effects use the game's effect system: Trigger / Target / Attach / Condition / Actions, see Mods\CustomHeroes\README.md.
+//
+// A Poison Mage: Noxious Trap throws a mushroom that bursts into a poison cloud (damage + Poison every second).
+// Specializations: The Swift Scout (Duelist; Duelists Poison on auto attack, Backup), The Guerrilla (Assassin; Assassins
+// in Stealth Poison on auto attack, killing a Poisoned enemy gives Stealth, Backup), The Omega Squad (more Poison, and
+// Poisoned enemies spread Poison when they die).
+// Look: the League model with its own League clips (Assets\teemo.glb).
+// Per-rank numbers: the game counts ranks C=1 .. S=4 ("[0+5_Rank]" = 5/10/15/20).
+{
+  "Id": 31,
+  "Key": "Teemo",
+  "Name": "Teemo",
+  "Template": 17,                        // Ratna: ranged Mage, starts with her active, 2.13 s cast
+  "Guild": "Gaia Project",               // with the other poison heroes, Floeria and Pimenta
+  "Classes": ["Mage"],
+  "Gender": "Masculine",
+  "Tags": ["Poison", "Debuff", "Stealth"],
+
+  "Model": {
+    "File": "Assets/teemo.glb",          // League skeleton; hip bone "Root"
+    "Scale": 0.4,                        // hip match alone made him ~2 m tall (short legs: hips 0.29 of 1.03); 0.4 = ~1 m, half of Ratna
+    "HideTemplateEffects": true,
+    "Clips": {
+      "Idle": "Idle1_Base",
+      "Move": "Run_Base",
+      "BasicAttack": "Attack1.ASU_Teemo.anm,Attack1.ASU_Teemo.anm,Crit.ASU_Teemo.anm",
+      "SkillAttack": "Spell4_0",         // his R: the mushroom throw
+      "Die": "Death"
+    },
+    "Warp": false,
+    "Hits": { "Attack1.ASU_Teemo.anm": 0.15, "Crit.ASU_Teemo.anm": 0.15, "Spell4_0": 0.3 },
+    "Timings": { "SkillAttack": [2.13, 0.5] }   // the cloud lands 0.5 s into the cast (the AoE's _delay)
+  },
+  "Portraits": {
+    "Source": "Assets/Portraits/_source.png",   // idle stance rendered from the .glb (yasuo_render.py, teemo_icons.py)
+    "Folder": "Assets/Portraits",               // Teemo_round / Square_Portrait_Teemo: head from his League splash (teemo_icons.py)
+    "Scale": 0.7
+  },
+  "Voice": "Assets/Voice",                      // League wiki lines (yasuo_fetch_audio.py ... Teemo); SKILL_VO = his laugh
+
+  "Lore": {
+    "Title": "The Swift Scout",
+    "Quote": "Captain Teemo on duty!",
+    "CurrentWork": "The Bandle Scouts sent their smallest captain through the rift to map what lay beyond. He mapped it, planted mushrooms along every path, and stayed. The Gaia Project gardeners pretend not to notice which patches of their fields are his.",
+    "Motivation": "Never underestimate the power of the Scout's code: be prepared, be patient, and always know where you planted the last one."
+  },
+
+  // Mages run 575-650 HP / 26-27 Defense / 25 Magic (Ratna 575 / 27 / 25, Funke 650 / 27 / 25).
+  "Stats": {
+    "MaxHealth": 600,
+    "MaxMana": 85,
+    "StartingMana": 35,
+    "ManaRegen": 4,
+    "Defense": 26,
+    "Magic": 25,
+    "BaseAttackDamage": 22,
+    "BaseAttackSpeed": 0.5,
+    "AttackRange": 4,
+    "Crit": 15,
+    "StartWithActiveAbility": 1
+  },
+
+  "Active": {
+    "Id": 33,
+    "Template": 104,                     // the Mushroom Mage's AoE: placed on its target after 0.5 s, lasts 3.1 s
+    "Name": "Noxious Trap",
+    "Description": "Throw a mushroom at an enemy. It bursts into a poison cloud for 3 seconds.\n\n[Each second,]<bold> deal [35+35|40|45|50_Magic]<statcalc_damage> damage and inflict [2+10_Magic]<statcalc_poison> [Poison]<poison> to enemies in the cloud.",
+    "ActionFields": {
+      "_aoeEntry": { "Ability": 22, "Field": "_regularAoeEntry" },   // Pimenta's poison cloud (radius 3.8) instead of the ice one
+      "AoePlacementTargetType": "Enemies",
+      // the cloud's own effects, every second (Floeria's flower field: TargetType AllEnemies inside a hero's AoE)
+      "_effects": [
+        { "Trigger": "OnInterval", "Interval": 1, "Target": "AllEnemies", "Attach": "Global",
+          "Actions": [
+            { "Type": "DealCritableDamageWithScalingAction", "BaseDamage": 35,
+              "Scalings": [ { "Stat": "Magic", "Factors": [0.35, 0.4, 0.45, 0.5] } ] },
+            { "Type": "ApplyStatusFromOwnerStatAction", "Base": 2, "Increment": 10, "Multiplier": 1, "Status": "Poison", "StatType": "Magic" } ] }
+      ]
+    },
+    "Effects": []
+  },
+
+  "Specializations": [
+    {
+      // Sal's Duelist/Backup specialization as the base (class + icon). Like the game's relic "Whenever a Duelist auto
+      // attacks, they inflict N Poison": OnAttackDamageDealt by any Duelist, Poison per Teemo's rank on the target.
+      "Id": 3101,
+      "Template": 2301,
+      "Name": "The Swift Scout",
+      "PassiveName": "Toxic Shot",
+      "Class": "Duelist",
+      "Tags": ["Poison", "Backup"],
+      "ClassDescription": "Gain the [Duelist]<duelist> class and [20 Attack Speed]<attackspeed>.",
+      "Description": "Whenever a [Duelist]<duelist> auto attacks, they inflict [0+1_Rank]<statcalc_poison> [Poison]<poison> on their target. [Backup.]<backup>",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "AttackSpeed", "Value": 20 } ] },
+        { "Trigger": "OnAttackDamageDealt", "Target": "TriggerTarget", "Attach": "SourceIsHeroWithClass", "AttachClass": "Duelist",
+          "Backup": true,
+          "Actions": [ { "Type": "ApplyStatusPerOwnerRankAction", "Status": "Poison", "AmountPerRank": 1 } ] }
+      ]
+    },
+    {
+      // Ratna's Assassin/Stealth specialization as the base (class + icon). Stealth is status 40 ("can not be targeted").
+      // Stealth attacks: any Assassin's auto attack while the attacker (trigger source) has Stealth.
+      // On kill: OnCharacterKilled, the killed enemy (trigger target) still has Poison, Stealth for the killer
+      // (trigger source) for 1 s per Teemo's rank. Only this part is Backup, as asked.
+      "Id": 3102,
+      "Template": 1703,
+      "Name": "The Guerrilla",
+      "PassiveName": "Guerrilla Warfare",
+      "Class": "Assassin",
+      "Tags": ["Poison", "Stealth", "Backup"],
+      "ClassDescription": "Gain the [Assassin]<assassin> class and [30 Crit]<crit>.",
+      "Description": "Whenever an [Assassin]<assassin> in [Stealth]<stealth> auto attacks, they inflict [0+5_Rank]<statcalc_poison> [Poison]<poison> on their target.\n\nWhenever an enemy with [Poison]<poison> dies, its killer gains [Stealth]<stealth> for [0+1_Rank]<statcalc_rank> seconds. [Backup.]<backup>",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Crit", "Value": 30 } ] },
+        { "Trigger": "OnAttackDamageDealt", "Target": "TriggerTarget", "Attach": "SourceIsHeroWithClass", "AttachClass": "Assassin",
+          "Condition": { "Type": "DoesSourceHaveStatusCondition", "Status": "Stealth" },
+          "Actions": [ { "Type": "ApplyStatusPerOwnerRankAction", "Status": "Poison", "AmountPerRank": 5 } ] },
+        { "Trigger": "OnCharacterKilled", "Target": "TriggerSource", "Attach": "SourceIsHero", "Backup": true,
+          "Condition": { "Type": "DoesTriggerTargetHaveStatusCondition", "Status": "Poison" },
+          "Actions": [ { "Type": "ApplyStatusWithDurationPerOwnerRankAction", "Status": "Stealth", "Amount": 1, "DurationPerRank": 1 } ] }
+      ]
+    },
+    {
+      // Floeria's Poison/Debuff specialization as the base (icon). More Poison: whenever Teemo inflicts Poison
+      // (OnStatusStacksApplied, his own, IsTriggerOfStatusCondition Poison) the stacks grow by 25% per rank (the action
+      // behind "inflict N% more", Floeria's text style). Spread: when a Poisoned enemy dies, the enemies next to it get
+      // Poison per rank.
+      "Id": 3103,
+      "Template": 802,
+      "Name": "The Omega Squad",
+      "PassiveName": "Mushroom Field",
+      "Tags": ["Poison", "Debuff"],
+      "Description": "Gain [30 Magic.]<magic>\n\nTeemo inflicts [0+25_Rank]<statcalc_rank>[% more Poison.]<poison>\n\nWhenever an enemy with [Poison]<poison> dies, inflict [5+5_Rank]<statcalc_poison> [Poison]<poison> on the enemies next to it.",
+      "Effects": [
+        { "Trigger": "Constant", "Target": "Owner",
+          "Actions": [ { "Type": "ModifyStatAction", "StatType": "Magic", "Value": 30 } ] },
+        { "Trigger": "OnStatusStacksApplied", "Target": "TriggerTarget", "Attach": "OwnerIsSource",
+          "Condition": { "Type": "IsTriggerOfStatusCondition", "_status": "Poison" },
+          "Actions": [ { "Type": "IncreaseTriggerDebuffByTriggerValuePercentPerOwnerRankAction", "_basePercent": 0, "_percentPerOwnerRank": 0.25 } ] },
+        { "Trigger": "OnCharacterKilled", "Target": "AllEnemies", "Attach": "TargetIsMonster",
+          "Condition": { "Type": "CompoundCondition", "_conditions": [
+              { "Type": "IsAdjacentToTriggerTargetCondition" },
+              { "Type": "DoesTriggerTargetHaveStatusCondition", "Status": "Poison" } ] },
+          "Actions": [ { "Type": "ApplyStatusPerOwnerRankWithBaseAction", "Status": "Poison", "Base": 5, "AmountPerRank": 5 } ] }
+      ]
+    }
+  ]
+}

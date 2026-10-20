@@ -1,0 +1,94 @@
+{
+ "attack_0": {
+  "s": 0.92,
+  "text": "Yes, sir!"
+ },
+ "attack_1": {
+  "s": 1.01,
+  "text": "Reporting in."
+ },
+ "attack_2": {
+  "s": 0.81,
+  "text": "Swiftly!"
+ },
+ "attack_3": {
+  "s": 2.06,
+  "text": "Hut, two, three, four."
+ },
+ "attack_4": {
+  "s": 1.1,
+  "text": "I'll scout ahead!"
+ },
+ "attack_5": {
+  "s": 1.21,
+  "text": "Armed and ready."
+ },
+ "attack_6": {
+  "s": 1.45,
+  "text": "That's gotta sting."
+ },
+ "ban": {
+  "s": 2.23,
+  "text": "Yes, sir!"
+ },
+ "death_0": {
+  "s": 0.98,
+  "text": "Teemo exhales."
+ },
+ "death_1": {
+  "s": 0.81,
+  "text": "Teemo exhales."
+ },
+ "joke": {
+  "s": 2.28,
+  "text": "Size doesn't mean everything."
+ },
+ "laugh_0": {
+  "s": 0.7,
+  "text": "Teemo laughs."
+ },
+ "laugh_1": {
+  "s": 0.81,
+  "text": "Teemo laughs."
+ },
+ "laugh_2": {
+  "s": 1.25,
+  "text": "Teemo laughs."
+ },
+ "move_0": {
+  "s": 1.21,
+  "text": "Armed and ready."
+ },
+ "move_1": {
+  "s": 0.81,
+  "text": "Swiftly!"
+ },
+ "move_2": {
+  "s": 1.01,
+  "text": "Reporting in."
+ },
+ "move_3": {
+  "s": 2.06,
+  "text": "Hut, two, three, four."
+ },
+ "move_4": {
+  "s": 0.92,
+  "text": "Yes, sir!"
+ },
+ "move_5": {
+  "s": 1.1,
+  "text": "I'll scout ahead!"
+ },
+ "move_6": {
+  "s": 1.45,
+  "text": "That's gotta sting."
+ },
+ "select": {
+  "s": 3.0,
+  "text": "Captain Teemo on duty."
+ },
+ "taunt": {
+  "s": 3.91,
+  "text": "Never underestimate the power of the Scout's code."
+ }
+}
